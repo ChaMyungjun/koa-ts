@@ -61,11 +61,6 @@ createConnection({
       // These routes are protected by the JWT middleware, also include middleware to respond with "Method Not Allowed - 405".
       app.use(protectedRouter.routes()).use(protectedRouter.allowedMethods());
 
-      //testing
-      //app.use((ctx: any) => {
-      //  ctx.body = "Hello Koa";
-      //});
-
       // Register cron job to do any action needed
       cron.start();
 
@@ -77,18 +72,3 @@ createConnection({
     }
   })
   .catch((error: string) => console.log("TypeORM connection error: ", error));
-
-//Testing code
-// import Koa from "koa";
-
-// import { config } from "./config";
-
-// const app = new Koa();
-
-// app.use((ctx: any) => {
-//   ctx.body = "Hello Koa";
-// });
-
-// app.listen(config.port, () => {
-//   console.log(`Server running on port ${config.port}`);
-// });
