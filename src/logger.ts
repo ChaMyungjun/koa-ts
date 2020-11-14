@@ -2,6 +2,7 @@ import { Context } from "koa";
 import { config } from "./config";
 import { transports, format } from "winston";
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const logger = (winstonInstance: any): any  => {
     winstonInstance.configure({
         level: config.debugLogging ? "debug" : "info",
