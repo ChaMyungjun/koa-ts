@@ -6,6 +6,7 @@ import cors from "@koa/cors";
 import winston from "winston";
 import { createConnection } from "typeorm";
 import "reflect-metadata";
+import AdminBro from "admin-bro";
 
 import { logger } from "./logger";
 import { config } from "./config";
@@ -34,6 +35,15 @@ try {
   })
     .then(async () => {
       const app = new Koa();
+
+      //adminBro create
+      // const adminBro = new AdminBro({
+      //   // databases: [connection],
+      //   resources: [
+      //     { resource: Person, options: { parent: { name: "foobar" } } },
+      //   ],
+      //   rootPath: "/admin",
+      // });
 
       // Provides important security headers to make your app more secure
       app.use(helmet());
