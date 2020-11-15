@@ -1,5 +1,5 @@
 import Router from "@koa/router";
-import { general, test } from "./controller";
+import { general } from "./controller";
 
 const unprotectedRouter = new Router();
 
@@ -7,6 +7,6 @@ const unprotectedRouter = new Router();
 unprotectedRouter.get("/", general.helloWorld);
 
 //test route
-unprotectedRouter.get("/test", test.testing);
+//unprotectedRouter.get("/test", test.testing);
 
 export { unprotectedRouter };
