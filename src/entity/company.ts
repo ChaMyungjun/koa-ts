@@ -3,15 +3,22 @@ import { Entity, Column, PrimaryGeneratedColumn, BaseEntity } from "typeorm";
 import { Length, IsEmail } from "class-validator";
 
 @Entity()
-export class User extends BaseEntity {
+export class Company extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  //name
+  //Compnayname
   @Column({
     length: 80,
   })
   @Length(3, 80)
+  comapnyName: string;
+
+  //name
+  @Column({
+    length: 30,
+  })
+  @Length(3, 20)
   name: string;
 
   //email
@@ -21,12 +28,26 @@ export class User extends BaseEntity {
   @IsEmail()
   email: string;
 
-  //password
+  //position
   @Column({
     length: 100,
   })
   @Length(6, 100)
-  password: string;
+  position: string;
+
+  //phone
+  @Column({
+    length: 30,
+  })
+  @Length(9, 20)
+  phone: string;
+
+  //business img
+  @Column({
+    length: 100,
+  })
+  @Length(30, 80)
+  image: string;
 }
 
 export const userSchema = {

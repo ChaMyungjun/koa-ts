@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Context } from "koa";
 import { config } from "./config";
 import { transports, format } from "winston";

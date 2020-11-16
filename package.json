@@ -70,6 +70,7 @@
     "koa-helmet": "^5.2.0",
     "koa-jwt": "^3.6.0",
     "koa-swagger-decorator": "^1.5.16",
+    "koa2-formidable": "^1.0.2",
     "newman": "^5.2.1",
     "pg": "^8.5.0",
     "reflect-metadata": "^0.1.13",
