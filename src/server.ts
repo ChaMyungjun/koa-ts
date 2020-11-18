@@ -4,6 +4,8 @@ import bodyParser from "koa-bodyparser";
 import helmet from "koa-helmet";
 import cors from "@koa/cors";
 import winston from "winston";
+import passport from "koa-passport";
+import session from "koa-session";
 import { createConnection } from "typeorm";
 import "reflect-metadata";
 import AdminBro from "admin-bro";
@@ -103,6 +105,10 @@ try {
       app.use(
         jwt({ secret: config.jwtSecret }).unless({ path: [/^\/swagger-/] })
       );
+
+      //passport initialize setting
+      app.use(passport.initialize());
+      app.use(passport.session());
 
       // Register cron job to do any action needed
       cron.start();

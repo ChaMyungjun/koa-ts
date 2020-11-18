@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { SwaggerRouter } from "koa-swagger-decorator";
-import passport from "passport";
-import { user } from "./controller";
+import passport from "koa-passport";
+import { user, kakao } from "./controller";
 
 const protectedRouter = new SwaggerRouter();
+const kakaoStrategy = require("./social").Strategy;
 
 // USER ROUTES
 protectedRouter.get("/users", user.getUsers); //All Member find
@@ -13,9 +15,37 @@ protectedRouter.delete("/users/:id", user.deleteUser); //specified member delete
 protectedRouter.delete("/testusers", user.deleteTestUsers); // All member delete
 
 //kakao Routes
-protectedRouter.get("/kakao/auth", passport.authenticate("kakao-auth"));
+// protectedRouter.get("/kakao/auth", passport.authenticate("kakao-auth"));
+//error passport is not a function
 
+console.log(process.env.kakao_secret_key);
 
+const kakaoKey = {
+  clientID: process.env.kakao_rest_api,
+  clientSecret: process.env.kakao_secret_key,
+  callbackURL: process.env.kakao_redirect_url,
+};
+
+passport.use(
+  "kakao-login",
+  new kakaoStrategy(
+    kakaoKey,
+    (accessToken: any, refreshToken: any, profile: any) => {
+      //USER.info is profile
+      console.log(profile);
+    }
+  )
+);
+
+protectedRouter.get("/kakao/login", passport.authenticate("kakao-login"));
+
+protectedRouter.get(
+  "/user/kakao/auth",
+  passport.authenticate("kakao-login", {
+    successRedirect: "/",
+    failureRedirect: "/test",
+  })
+);
 
 // Swagger endpoint
 protectedRouter.swagger({
@@ -25,7 +55,7 @@ protectedRouter.swagger({
   version: "1.5.0",
 });
 
-// mapDir will scan the input dir, and automatically call router.map to all Router Class
+// mapDir will scan the input dir, and mautomatically call router.map to all Router Class
 protectedRouter.mapDir(__dirname);
 
 export { protectedRouter };
