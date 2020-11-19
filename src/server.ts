@@ -5,7 +5,6 @@ import helmet from "koa-helmet";
 import cors from "@koa/cors";
 import winston from "winston";
 import passport from "koa-passport";
-import session from "koa-session";
 import { createConnection } from "typeorm";
 import "reflect-metadata";
 import AdminBro from "admin-bro";
@@ -21,7 +20,6 @@ import { unprotectedRouter } from "./unprotectedRoutes";
 import { protectedRouter } from "./protectedRoutes";
 import { cron } from "./cron";
 import { validate } from "class-validator";
-import { info } from "console";
 
 Resource.validate = validate;
 AdminBro.registerAdapter({ Database, Resource });

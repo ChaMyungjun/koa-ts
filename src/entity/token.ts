@@ -47,7 +47,7 @@ export const tokenSchema = {
 //token encoded => converting
 export function encoded(access: any) {
   const socialToken = jwt.sign({ access }, process.env.SECRET_KEY, {
-    expiresIn: "7d",
+    expiresIn: "2h",
     issuer: "Koa",
     subject: "token",
   });
@@ -62,7 +62,7 @@ export function reencoded(refresh: any) {
   return socialRefreshToken;
 }
 
-// export function decoded(token: any) {
-//   const decodeToken = jwt.verify(token, process.env.SECRET_KEY);
-//   return decodeToken;
-// }
+export function decoded(token: any) {
+  const decodeToken = jwt.verify(token, process.env.SECRET_KEY);
+  return decodeToken;
+}
