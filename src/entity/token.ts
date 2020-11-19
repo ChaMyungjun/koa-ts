@@ -50,7 +50,6 @@ export function encoded(access: any) {
     expiresIn: "7d",
     issuer: "Koa",
     subject: "token",
-    algorithm: "RS256",
   });
   console.log("token value:", socialToken);
   return socialToken;
@@ -58,19 +57,12 @@ export function encoded(access: any) {
 
 //refresh token converting (expiresIn none)
 export function reencoded(refresh: any) {
-  const socialRefreshToken = jwt.sign({ refresh }, process.env.SECRET_KEY, {
-    algorithm: "RS256",
-  });
+  const socialRefreshToken = jwt.sign({ refresh }, process.env.SECRET_KEY);
   console.log("refresh token value:", socialRefreshToken);
   return socialRefreshToken;
 }
 
-export function decoded(token: any) {
-  const decodeToken = new Promise((resolve: any, reject: any) => {
-    jwt.verify(token, process.env.SECRET_KEY, (err: any, decoded: any) => {
-      if (err) reject(err);
-      resolve(decoded);
-    });
-  });
-  return decodeToken;
-}
+// export function decoded(token: any) {
+//   const decodeToken = jwt.verify(token, process.env.SECRET_KEY);
+//   return decodeToken;
+// }

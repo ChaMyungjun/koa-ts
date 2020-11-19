@@ -1,10 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { BaseContext } from "koa";
 import { getManager, Repository, Not, Equal, Like } from "typeorm";
 import { validate, ValidationError } from "class-validator";
-import { request, responsesAll, summary, tagsAll } from "koa-swagger-decorator";
-import passport from "koa-passport";
 
 import { Token, tokenSchema, encoded, reencoded } from "../entity/token";
 

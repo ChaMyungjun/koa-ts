@@ -3,8 +3,6 @@
 import { BaseContext } from "koa";
 import { getManager, Repository, Not, Equal, Like } from "typeorm";
 import { validate, ValidationError } from "class-validator";
-import { request, responsesAll, summary, tagsAll } from "koa-swagger-decorator";
-import passport from "koa-passport";
 
 import { Token, tokenSchema, encoded, reencoded } from "../entity/token";
 
@@ -30,7 +28,6 @@ export async function NavergetToken(
     tokenToBeSaved.tokenProvider = profile.provider;
 
     console.log(profile);
-
 
     //error checking
     const errors: ValidationError[] = await validate(tokenToBeSaved);
