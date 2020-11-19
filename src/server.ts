@@ -13,6 +13,7 @@ import { buildRouter } from "@admin-bro/koa";
 import { Database, Resource } from "@admin-bro/typeorm";
 
 import { User } from "./entity/user";
+import { Token } from "./entity/token";
 
 import { logger } from "./logger";
 import { config } from "./config";
@@ -20,6 +21,7 @@ import { unprotectedRouter } from "./unprotectedRoutes";
 import { protectedRouter } from "./protectedRoutes";
 import { cron } from "./cron";
 import { validate } from "class-validator";
+import { info } from "console";
 
 Resource.validate = validate;
 AdminBro.registerAdapter({ Database, Resource });
@@ -49,6 +51,7 @@ try {
 
       //appyling connection to model
       User.useConnection(connection);
+      Token.useConnection(connection);
 
       //adminBro create
       const adminBro = new AdminBro({
@@ -57,6 +60,21 @@ try {
             resource: User,
             options: {
               properties: {
+                name: {
+                  isVisible: {
+                    list: true,
+                    filter: true,
+                    show: true,
+                    edit: true,
+                  },
+                },
+              },
+            },
+          },
+          {
+            resource: Token,
+            options: {
+              properties: { 
                 name: {
                   isVisible: {
                     list: true,

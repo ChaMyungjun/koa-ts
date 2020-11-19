@@ -1,17 +1,21 @@
-import * as util from "util";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { inherits } from "util";
 import OauthStrategy from "passport-oauth2";
 
-//types
-import { StrategyOptions, Profile } from "./kakao.types";
+import { StrategyOptionsKakao, ProfileKakao } from "./social.types";
+import { doesNotReject } from "assert";
 
 const DEFAULT_CLIENT_SECRET = "kakao";
 const OAUTH_HOST = "https://kauth.kakao.com";
-const USER_PROFILE_URL = "https://kapi.kakao.com/v2/me";
+const USER_PROFILE_URL = "https://kapi.kakao.com/v2/user/me";
 
-export const buildOptions = (options: StrategyOptions) => {
+export const buildOptions = (options: StrategyOptionsKakao) => {
+  //URL change
   options.authorizationURL = `${OAUTH_HOST}/oauth/authorize`;
   options.tokenURL = `${OAUTH_HOST}/oauth/token`;
 
+  //kakao code checking
   if (!options.clientSecret) {
     options.clientSecret = DEFAULT_CLIENT_SECRET;
   }
@@ -26,17 +30,25 @@ export const buildOptions = (options: StrategyOptions) => {
   return options;
 };
 
-function Strategy(options: StrategyOptions = {}, verify: unknown) {
+function KakaoStrategy(options: StrategyOptionsKakao = {}, verify: any) {
   OauthStrategy.call(this, buildOptions(options), verify);
   this.name = "kakao";
   this._userProfileURL = USER_PROFILE_URL;
 }
 
-util.inherits(Strategy, OauthStrategy);
+/**
+ * `OauthStrategy`를 상속 받는다.
+ * Strategy => OauthStrategy possible
+ */
+inherits(KakaoStrategy, OauthStrategy);
 
-Strategy.prototype.userProfile = function (
+
+//getting user Profile
+//succes => profile.info
+//fail => error
+KakaoStrategy.prototype.userProfile = function (
   accessToken: string,
-  done: (error: Error, profile?: Profile) => void
+  done: (error: Error, profile?: ProfileKakao) => void
 ) {
   this._oauth2.get(
     this._userProfileURL,
@@ -48,11 +60,12 @@ Strategy.prototype.userProfile = function (
 
       try {
         const json = JSON.parse(body);
-        //connectio with kakao story or diff
+        // 카카오톡이나 카카오스토리에 연동한 적이 없는 계정의 경우
+        // properties가 비어있다고 한다. 없을 경우의 처리
         const properties = json.properties || {
           nickname: "미연동 계정",
         };
-        const profile: Profile = {
+        const profile: ProfileKakao = {
           provider: "kakao",
           id: json.id,
           username: properties.nickname,
@@ -68,4 +81,4 @@ Strategy.prototype.userProfile = function (
   );
 };
 
-export default Strategy;
+export default KakaoStrategy;
