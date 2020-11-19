@@ -6,7 +6,7 @@ import { validate, ValidationError } from "class-validator";
 import { request, responsesAll, summary, tagsAll } from "koa-swagger-decorator";
 import passport from "koa-passport";
 
-import { Token, tokenSchema, encoded } from "../entity/token";
+import { Token, tokenSchema, encoded, reencoded } from "../entity/token";
 
 export async function NavergetToken(
   accessToken: any,
@@ -17,7 +17,7 @@ export async function NavergetToken(
   if (accessToken) {
     console.log("success");
     const token = encoded(accessToken);
-    const retoken = encoded(refreshToken);
+    const retoken = reencoded(refreshToken);
     console.log("lib token type:", typeof token);
     console.log("lib retoken type:", typeof retoken);
 
