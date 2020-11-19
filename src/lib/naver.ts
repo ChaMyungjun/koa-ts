@@ -31,6 +31,8 @@ export async function NavergetToken(
 
     console.log(profile);
 
+
+    //error checking
     const errors: ValidationError[] = await validate(tokenToBeSaved);
     if (errors.length > 0) {
       console.error(errors);

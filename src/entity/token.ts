@@ -56,6 +56,7 @@ export function encoded(access: any) {
   return socialToken;
 }
 
+//refresh token converting (expiresIn none)
 export function reencoded(refresh: any) {
   const socialRefreshToken = jwt.sign({ refresh }, process.env.SECRET_KEY, {
     algorithm: "RS256",

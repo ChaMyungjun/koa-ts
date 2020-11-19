@@ -30,6 +30,7 @@ export async function KakaogetToken(
     tokenToBeSaved.reToken = retoken;
     tokenToBeSaved.tokenProvider = profile.provider;
 
+    //error checking
     const errors: ValidationError[] = await validate(tokenToBeSaved);
 
     if (errors.length > 0) {
