@@ -5,7 +5,6 @@ import helmet from "koa-helmet";
 import cors from "@koa/cors";
 import winston from "winston";
 import passport from "koa-passport";
-import session from "koa-session";
 import { createConnection } from "typeorm";
 import "reflect-metadata";
 import AdminBro from "admin-bro";
@@ -95,7 +94,6 @@ try {
 
       //adminbor-koa buildRouter setting
       const router = buildRouter(adminBro, app);
-
       app.use(router.routes());
       app.use(router.allowedMethods());
 
@@ -124,9 +122,9 @@ try {
 
       // JWT middleware -> below this line routes are only reached if JWT token is valid, secret as env variable
       // do not protect swagger-json and swagger-html endpoints
-      app.use(
-        jwt({ secret: config.jwtSecret }).unless({ path: [/^\/swagger-/] })
-      );
+      // app.use(
+      //   jwt({ secret: config.jwtSecret }).unless({ path: [/^\/swagger-/] })
+      // );
 
       //passport initialize setting
       app.use(passport.initialize());

@@ -2,26 +2,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { inherits } from "util";
 import OauthStrategy from "passport-oauth2";
-import axios from "axios"
 
 import { StrategyOptionsKakao, ProfileKakao } from "./social.types";
 
 const DEFAULT_CLIENT_SECRET = "kakao";
 const OAUTH_HOST = "https://kauth.kakao.com";
 const USER_PROFILE_URL = "https://kapi.kakao.com/v2/user/me";
-const CHECK_TOKEN = "https://kapi.kakao.com/v1/user/access_token_info";
-
-//checking access_token valid
-// export const checkToken = (token: any) => {
-//   //kakao checking token ? 401 : 200
-//   //400 code -2 => token typeError
-//   //400 code -1 => internel server error(temporary server stopping)
-
-//   const data = axios(`${CHECK_TOKEN}`, {
-//     headers: {'Au'}
-//   })
-
-// }
 
 export const buildOptions = (options: StrategyOptionsKakao) => {
   //URL change
@@ -53,6 +39,7 @@ function KakaoStrategy(options: StrategyOptionsKakao = {}, verify: any) {
  * `OauthStrategy`를 상속 받는다.
  * Strategy => OauthStrategy possible
  */
+
 inherits(KakaoStrategy, OauthStrategy);
 
 //getting user Profile

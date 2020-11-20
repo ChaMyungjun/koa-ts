@@ -31,7 +31,22 @@ export async function KakaogetToken(
     if (errors.length > 0) {
       console.error(errors);
     } else if (await tokenRepsitory.findOne({ Id: tokenToBeSaved.Id })) {
-      console.error("error!");
+      try {
+        const tokenToRemove: Token | undefined = await tokenRepsitory.findOne({
+          Id: profile._json.id,
+        });
+        await tokenRepsitory.remove(tokenToRemove).then(async (res) => {
+          console.log(res);
+
+          const token = await tokenRepsitory.save(tokenToBeSaved);
+          console.log(token);
+
+          console.log("Delete Success & Add Success");
+        });
+        console.log("already exists");
+      } catch (err) {
+        console.error(err);
+      }
     } else {
       const token = await tokenRepsitory.save(tokenToBeSaved);
       console.log(token);

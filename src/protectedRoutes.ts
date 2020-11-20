@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { SwaggerRouter } from "koa-swagger-decorator";
 import passport from "koa-passport";
-import { user, test } from "./controller";
-import { access } from "fs";
+import { user } from "./controller";
 
 import { KakaogetToken } from "./lib/kakao";
 import { NavergetToken } from "./lib/naver";
@@ -42,6 +41,7 @@ passport.use(
       console.log(profile);
       if (accessToken) {
         KakaogetToken(accessToken, refreshToken, profile);
+        console.log("Success");
       }
     }
   )

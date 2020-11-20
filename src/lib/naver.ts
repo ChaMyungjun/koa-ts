@@ -11,6 +11,8 @@ import {
   reencoded,
   decoded,
 } from "../entity/token";
+import { cat } from "shelljs";
+import { access } from "fs";
 
 export async function NavergetToken(
   accessToken: any,
@@ -22,18 +24,15 @@ export async function NavergetToken(
     console.log("success");
     const token = encoded(accessToken);
     const retoken = reencoded(refreshToken);
-    // console.log("lib token type:", typeof token);
-    // console.log("lib retoken type:", typeof retoken);
 
-    const testToken = encoded("asdfasdf");
-    console.log("test", testToken);
-    const decodedToken = decoded(testToken);
-    console.log("test", decodedToken);
+    console.log(accessToken);
+
+    // const testToken = encoded("asdfasdf");
+    // console.log("test", testToken);
+    // const decodedToken = decoded(testToken);
+    // console.log("test", decodedToken);
 
     const tokenRepsitory: Repository<Token> = getManager().getRepository(Token);
-
-    const tokenTest: Token[] = await tokenRepsitory.find();
-    console.log(tokenTest);
 
     const tokenToBeSaved: Token = new Token();
     tokenToBeSaved.Id = profile.id;
@@ -41,19 +40,30 @@ export async function NavergetToken(
     tokenToBeSaved.reToken = retoken;
     tokenToBeSaved.tokenProvider = profile.provider;
 
-    console.log(profile);
-
     //error checking
     const errors: ValidationError[] = await validate(tokenToBeSaved);
     if (errors.length > 0) {
       console.error(errors);
     } else if (await tokenRepsitory.findOne({ Id: tokenToBeSaved.Id })) {
-      console.error("Already exists");
+      try {
+        const tokenToRemove: Token | undefined = await tokenRepsitory.findOne({
+          Id: profile._json.id,
+        });
+        await tokenRepsitory.remove(tokenToRemove).then(async (res) => {
+          console.log(res);
+
+          const token = await tokenRepsitory.save(tokenToBeSaved);
+          console.log(token);
+
+          console.log("Delete Success & Add Success");
+        });
+        console.log("already exists");
+      } catch (err) {
+        console.error(err);
+      }
     } else {
       const token = await tokenRepsitory.save(tokenToBeSaved);
       console.log(token);
     }
-
-    console.log("success");
   }
 }

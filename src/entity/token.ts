@@ -22,14 +22,14 @@ export class Token extends BaseEntity {
 
   //access_token
   @Column({
-    nullable: true,
+    nullable: false,
   })
   @Length(0, 400)
   token: string;
 
   //refresh_token
   @Column({
-    nullable: true,
+    nullable: false,
   })
   @Length(0, 400)
   reToken: string;
@@ -47,7 +47,7 @@ export const tokenSchema = {
 //token encoded => converting
 export function encoded(access: any) {
   const socialToken = jwt.sign({ access }, process.env.SECRET_KEY, {
-    expiresIn: "7d",
+    expiresIn: "1h",
   });
   console.log("token value:", socialToken);
   return socialToken;
@@ -61,6 +61,19 @@ export function reencoded(refresh: any) {
 }
 
 export function decoded(token: any) {
-  const decodeToken = jwt.verify(token, process.env.SECRET_KEY);
+  let decodeToken: any = null;
+  jwt.verify(token, process.env.SECRET_KEY, function (err: any, value: any) {
+    if (err) {
+      console.error(err);
+    }
+    console.log(value);
+    decodeToken = value;
+  });
   return decodeToken;
 }
+
+/**
+ *
+ * test { access: 'asdfasdf', iat: 1605842181, exp: 1606446981 }
+ *
+ */

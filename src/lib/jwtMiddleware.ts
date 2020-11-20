@@ -1,40 +1,127 @@
+/* eslint-disable @typescript-eslint/camelcase */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { BaseContext } from "koa";
-import jwt from "jsonwebtoken";
-import {
-  Token,
-  tokenSchema,
-  encoded,
-  reencoded,
-  decoded,
-} from "../entity/token";
-import { Repository, getManager } from "typeorm";
+import axios from "axios";
+import { Token, decoded } from "../entity/token";
+import { Repository, getManager, AdvancedConsoleLogger } from "typeorm";
+
+//token check url
+const CHECK_TOKEN_KAKAO = "https://kapi.kakao.com/v1/user/access_token_info";
+const CHECK_TOKEN_NAVER = "https://openapi.naver.com/v1/nid/verify";
+
+//token refresh url
+const GENERATE_TOKEN_KAKAO = "https://kauth.kakao.com/oauth/token";
+const GENERATE_TOKEM_NAVER = "https://nid.naver.com/oauth2.0/token";
 
 const jwtMiddleware = async (ctx: BaseContext, next: any) => {
-  console.log("called");
-  console.log(ctx.status);
-
   const tokenRepository: Repository<Token> = getManager().getRepository(Token);
 
   const token: Token[] = await tokenRepository.find();
   if (!token) return next();
 
   try {
-    token.map((cur, index) => {
+    token.map(async (cur, index) => {
+      const now = Math.floor(Date.now() / 1000);
       if (cur.tokenProvider === "kakao") {
-        //function()
-        console.log(cur.token);
-        ctx.body = cur.token;
+        const decodedKakaoToken = decoded(cur.token);
+        try {
+          await axios
+            .get(`${CHECK_TOKEN_KAKAO}`, {
+              headers: { Authorization: `Bearer ${decodedKakaoToken.access}` },
+            })
+            .then((res) => {
+              const resultToken = res;
+              console.log(resultToken.data);
+              if (resultToken.data) {
+                return next();
+              }
+            });
+        } catch (err) {
+          if (err.response.data.code === -401) {
+            const decodedKakaoRefresh = decoded(cur.reToken);
+            await axios
+              .get(`${GENERATE_TOKEN_KAKAO}`, {
+                params: {
+                  grant_type: "refresh_token",
+                  client_id: `${process.env.kakao_rest_api}`,
+                  refresh_token: `${decodedKakaoRefresh.access}`,
+                },
+              })
+              .then((res) => {
+                const resultToken = res;
+                console.log(resultToken);
+              });
+          } else if (decodedKakaoToken.exp - now < 60 * 40) {
+            const decodedKakaoRefresh = decoded(cur.reToken);
+            await axios
+              .get(`${GENERATE_TOKEN_KAKAO}`, {
+                params: {
+                  grant_type: "refresh_token",
+                  client_id: `${process.env.kakao_rest_api}`,
+                  refresh_token: `${decodedKakaoRefresh.access}`,
+                },
+              })
+              .then((res) => {
+                const resultToken = res;
+                console.log(resultToken);
+              });
+          } else if (err.response.data.code === -2) {
+            console.error("TypeError: token info is wrong");
+          } else if (err.response.data.code === -1) {
+            console.error("Internel Server Error in Kakao");
+          }
+          console.error(err.response.data);
+        }
+      } else if (cur.tokenProvider === "naver") {
+        const decodedNaverToken = decoded(cur.token);
+        try {
+          //   console.log(decodedNaverToken);
+          await axios
+            .get(`${CHECK_TOKEN_NAVER}`, {
+              headers: { Authorization: `Bearer ${decodedNaverToken.access}` },
+            })
+            .then((res) => {
+              const resultToken = res;
+              console.log(resultToken.data);
+            });
+        } catch (err) {
+          if (err.response.data.resultcode === "024") {
+            console.error(err.response.data.message);
+          } else if (decodedNaverToken.exp - now < 60 * 40) {
+            const decodedNaverRefresh = decoded(cur.reToken);
+            await axios
+              .get(`${GENERATE_TOKEM_NAVER}`, {
+                params: {
+                  client_id: `${process.env.naver_rest_api}`,
+                  client_secret: `${process.env.naver_secret_key}`,
+                  refresh_token: `${decodedNaverToken}`,
+                  grant_type: "refresh_token",
+                },
+              })
+              .then((res) => {
+                const resultToken = res;
+                console.log(resultToken);
+              });
+          }
+        }
       }
     });
+    return next();
   } catch (err) {
-    console.error(err);
+    return next();
   }
 };
 
 export default jwtMiddleware;
 
+// axios({
+//     method: "POST",
+//     url: `${CHECK_TOKEN_KAKAO}`,
+//     headers: { Authorization: `Bearer ${decodedKakaoToken}` },
+//   });
+
+//Sample data(after encoding)
 /**
  * 
  * [
