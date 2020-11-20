@@ -158,7 +158,7 @@ export default class UserController {
   }
 
   //Modify User info
-  @request("put", "/users/modify")
+  @request("put", "/user/modify")
   @summary("Update a user")
   @path({
     id: { type: "number", required: true, description: "id of user" },

@@ -27,10 +27,7 @@ const jwtMiddleware = async (ctx: BaseContext, next: any) => {
   if (!tokenSocial) return next();
 
   //loacl login token checking
-  // const tokenLocal = ctx.cookies.get("access-token");
-  // if (!tokenLocal) {
-  //   return next();
-  // }
+  const tokenLocal = ctx.cookies.get("access-token");
 
   //social log in cheking token
   tokenSocial.map(async (cur, index) => {
@@ -143,6 +140,29 @@ const jwtMiddleware = async (ctx: BaseContext, next: any) => {
       }
     }
   });
+
+  if (!tokenLocal) {
+    return next();
+  }
+
+  //local log in checking token
+  try {
+    const decodedLocalToken = decoded(tokenLocal);
+    console.log(decodedLocalToken);
+    const now = Math.floor(Date.now() / 1000);
+
+    //require refreshToken changing
+    if (decodedLocalToken.access) {
+      ctx.cookies.set("access-token", {
+        maxAge: 1000 * 60 * 60,
+        httpOnly: true,
+      });
+    }
+    return next();
+  } catch (err) {
+    console.error(err);
+  }
+
   return next();
 };
 

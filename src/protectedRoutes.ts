@@ -12,11 +12,12 @@ const naverStrategy = require("./social/naver.index").NaverStrategy;
 
 // USER ROUTES
 protectedRouter.get("/users", user.getUsers); //All Member find
-protectedRouter.post("/login/local", user.getUser); //Login
-protectedRouter.post("/register/local", user.createUser); //register
-protectedRouter.put("/users/:id", user.updateUser); //modify
+protectedRouter.post("/user/login", user.getUser); //Login
+protectedRouter.post("/user/register", user.createUser); //register
+protectedRouter.put("/user/modify", user.updateUser); //modify
 protectedRouter.delete("/users/:id", user.deleteUser); //specified member delete
 protectedRouter.delete("/testusers", user.deleteTestUsers); // All member delete
+protectedRouter.post("/user/logout", user.logoutUser); //user logout
 
 //kakao URL, API Key, code value
 const kakaoKey = {
