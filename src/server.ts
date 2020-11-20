@@ -5,6 +5,7 @@ import helmet from "koa-helmet";
 import cors from "@koa/cors";
 import winston from "winston";
 import passport from "koa-passport";
+import session from "koa-session";
 import { createConnection } from "typeorm";
 import "reflect-metadata";
 import AdminBro from "admin-bro";
@@ -20,6 +21,8 @@ import { unprotectedRouter } from "./unprotectedRoutes";
 import { protectedRouter } from "./protectedRoutes";
 import { cron } from "./cron";
 import { validate } from "class-validator";
+
+import jwtMiddleware from "./lib/jwtMiddleware";
 
 Resource.validate = validate;
 AdminBro.registerAdapter({ Database, Resource });
@@ -72,7 +75,7 @@ try {
           {
             resource: Token,
             options: {
-              properties: { 
+              properties: {
                 name: {
                   isVisible: {
                     list: true,
@@ -107,6 +110,9 @@ try {
 
       // Enable bodyParser with default options
       app.use(bodyParser());
+
+      //jwtMiddle using => social login accessToken valid checking
+      app.use(jwtMiddleware);
 
       // these routes are NOT protected by the JWT middleware, also include middleware to respond with "Method Not Allowed - 405".
       app

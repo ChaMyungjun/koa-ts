@@ -13,11 +13,9 @@ export async function KakaogetToken(
 ) {
   console.log(typeof accessToken);
   if (accessToken) {
-    console.log("success");
+    console.log("accessToken Value:", accessToken);
     const token = encoded(accessToken);
     const retoken = reencoded(refreshToken);
-    console.log("lib token type:", typeof token);
-    console.log("lib retoken type:", typeof retoken);
 
     const tokenRepsitory: Repository<Token> = getManager().getRepository(Token);
 
