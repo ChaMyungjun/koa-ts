@@ -2,6 +2,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, BaseEntity } from "typeorm";
 import { Length, IsEmail } from "class-validator";
 import crypto from "crypto";
+import jwt from "jsonwebtoken";
 
 @Entity()
 export class User extends BaseEntity {
@@ -57,3 +58,19 @@ export function comparePassword(password: any, passwordConfirm: any) {
   const hahsed = hashedPassword(passwordConfirm);
   return password === hahsed;
 }
+
+export const generateToken = (name: any, email: any, password: any) => {
+  const token = jwt.sign({ name, email, password }, process.env.JWT_SECRET, {
+    expiresIn: "1h",
+  });
+  return token;
+};
+
+export const generateRefresh = (name: any, email: any) => {
+  const token = jwt.sign({ name, email }, process.env.JWT_SECRET);
+  return token;
+};
+
+// export const reGenerateToken = (refresh: any) => {
+//   const token = 
+// }

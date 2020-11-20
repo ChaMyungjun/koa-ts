@@ -72,6 +72,7 @@ export function decoded(token: any) {
   return decodeToken;
 }
 
+
 /**
  *
  * test { access: 'asdfasdf', iat: 1605842181, exp: 1606446981 }

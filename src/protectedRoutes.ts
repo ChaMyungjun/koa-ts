@@ -86,6 +86,9 @@ protectedRouter.get(
   })
 );
 
+//social logout
+// protectedRouter.get("/kakao/logout", passport.authenticate);
+
 // Swagger endpoint
 protectedRouter.swagger({
   title: "node-typescript-koa-rest",

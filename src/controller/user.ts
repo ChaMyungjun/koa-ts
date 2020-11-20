@@ -14,6 +14,8 @@ import {
   userSchema,
   hashedPassword,
   comparePassword,
+  generateToken,
+  generateRefresh,
 } from "../entity/user";
 
 @responsesAll({
@@ -38,7 +40,7 @@ export default class UserController {
   }
 
   //Login => /login/local
-  @request("post", "/login/local")
+  @request("post", "/user/login")
   @summary("Find user by id")
   @path({
     email: { type: "string", required: true, description: "email of user" },
@@ -78,7 +80,7 @@ export default class UserController {
   }
 
   //Sign Up => /register/local
-  @request("post", "/users")
+  @request("post", "/users/register")
   @summary("Create a user")
   @body(userSchema)
   public static async createUser(ctx: BaseContext): Promise<void> {
@@ -95,6 +97,18 @@ export default class UserController {
 
     // validate user entity
     const errors: ValidationError[] = await validate(userToBeSaved); // errors is an array of validation errors
+
+    //Generate token
+    const token = generateToken(
+      userToBeSaved.name,
+      userToBeSaved.email,
+      userToBeSaved.password
+    );
+
+    const refreshToken = generateRefresh(
+      userToBeSaved.name,
+      userToBeSaved.email
+    );
 
     //Error Checking
     if (errors.length > 0) {
@@ -129,13 +143,22 @@ export default class UserController {
       // save the user contained in the POST body
       const user = await userRepository.save(userToBeSaved);
       // return CREATED status code and updated user
+      //token value cookies add
+
+      ctx.cookies.set("access-token", token, {
+        maxAge: 1000 * 60 * 60,
+        httpOnly: true,
+      });
+      ctx.cookies.set("refresh-token", refreshToken, {
+        httpOnly: true,
+      });
       ctx.status = 201;
       ctx.body = user;
     }
   }
 
   //Modify User info
-  @request("put", "/users/{id}")
+  @request("put", "/users/modify")
   @summary("Update a user")
   @path({
     id: { type: "number", required: true, description: "id of user" },
@@ -149,8 +172,8 @@ export default class UserController {
     // build up entity user to be updated
     const userToBeUpdated: User = new User();
     userToBeUpdated.id = +ctx.params.id || 0; // will always have a number, this will avoid errors
-    userToBeUpdated.name = ctx.request.body.name;
     userToBeUpdated.email = ctx.request.body.email;
+    userToBeUpdated.password = hashedPassword(ctx.request.body.password);
 
     // validate user entity
     const errors: ValidationError[] = await validate(userToBeUpdated); // errors is an array of validation errors
@@ -164,10 +187,15 @@ export default class UserController {
       // return a BAD REQUEST status code and error message
       ctx.status = 400;
       ctx.body = "The user you are trying to update doesn't exist in the db";
+    } else if (ctx.request.body.password !== ctx.request.body.passwordConfirm) {
+      //password matching checking
+      ctx.status = 400;
+      ctx.body = "The specified password doesn't matched";
     } else if (
       await userRepository.findOne({
         id: Not(Equal(userToBeUpdated.id)),
         email: userToBeUpdated.email,
+        password: userToBeUpdated.password,
       })
     ) {
       // return BAD REQUEST status code and email already exists error
@@ -229,6 +257,14 @@ export default class UserController {
     await userRepository.remove(usersToRemove);
 
     // return a NO CONTENT status code
+    ctx.status = 204;
+  }
+
+  //local token delete => logout
+  @request("logout", "/user/logout")
+  @summary("Delete user token")
+  public static async logoutUser(ctx: BaseContext): Promise<void> {
+    ctx.cookies.set("access-token");
     ctx.status = 204;
   }
 }
