@@ -1,16 +1,8 @@
 import { BaseContext } from "koa";
 import { getManager, Repository, Not, Equal, Like } from "typeorm";
-import {
-  request,
-  summary,
-  path,
-  body,
-  responsesAll,
-  tagsAll,
-} from "koa-swagger-decorator";
+import { request, summary, responsesAll, tagsAll } from "koa-swagger-decorator";
 import { Company } from "../entity/company";
-import { User } from "../entity/user";
-import { IsEmail, validate, ValidationError } from "class-validator";
+import { validate, ValidationError } from "class-validator";
 
 @responsesAll({
   200: { description: "success" },
