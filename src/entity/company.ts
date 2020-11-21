@@ -1,6 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Entity, Column, PrimaryGeneratedColumn, BaseEntity } from "typeorm";
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  BaseEntity,
+  OneToOne,
+} from "typeorm";
 import { Length, IsEmail } from "class-validator";
+import { User } from "./user";
 
 @Entity()
 export class Company extends BaseEntity {
@@ -48,18 +55,21 @@ export class Company extends BaseEntity {
   })
   @Length(30, 80)
   image: string;
+
+  @OneToOne(() => User, (user) => user.email)
+  user: User;
 }
 
-export const userSchema = {
-  id: { type: "number", required: true, example: 1 },
-  name: { type: "string", required: true, example: "Javier" },
-  email: {
-    type: "string",
-    required: true,
-    example: "avileslopez.javier@gmail.com",
-  },
-  password: {
-    type: "string",
-    required: true,
-  },
+export const Companyschema = {
+  // id: { type: "number", required: true, example: 1 },
+  // name: { type: "string", required: true, example: "Javier" },
+  // email: {
+  //   type: "string",
+  //   required: true,
+  //   example: "avileslopez.javier@gmail.com",
+  // },
+  // password: {
+  //   type: "string",
+  //   required: true,
+  // },
 };

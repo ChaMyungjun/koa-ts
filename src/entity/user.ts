@@ -1,8 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Entity, Column, PrimaryGeneratedColumn, BaseEntity } from "typeorm";
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  BaseEntity,
+  OneToOne,
+  JoinColumn,
+} from "typeorm";
 import { Length, IsEmail } from "class-validator";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
+import { Company } from "./company";
 
 @Entity()
 export class User extends BaseEntity {
@@ -29,6 +37,10 @@ export class User extends BaseEntity {
   })
   @Length(6, 100)
   password: string;
+
+  @OneToOne(() => Company)
+  @JoinColumn()
+  company: Company;
 }
 
 export const userSchema = {

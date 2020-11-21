@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { SwaggerRouter } from "koa-swagger-decorator";
 import passport from "koa-passport";
-import { user } from "./controller";
+import { user, company } from "./controller";
 
 import { KakaogetToken } from "./lib/kakao";
 import { NavergetToken } from "./lib/naver";
@@ -68,6 +68,10 @@ protectedRouter.get("/kakao/login", passport.authenticate("kakao-login"));
 
 //naver Routes
 protectedRouter.get("/naver/login", passport.authenticate("naver-login"));
+
+
+//company data getting
+protectedRouter.post("/company/register", company.createCompany);
 
 //kakao redirect
 protectedRouter.get(
