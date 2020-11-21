@@ -18,6 +18,8 @@ import {
   generateRefresh,
 } from "../entity/user";
 
+import { Token, encoded } from "../entity/token";
+
 @responsesAll({
   200: { description: "success" },
   400: { description: "bad request" },
@@ -54,6 +56,11 @@ export default class UserController {
     // get a user repository to perform operations with user
     const userRepository: Repository<User> = getManager().getRepository(User);
 
+    //get a token repsitory to perform operations with token
+    // const tokenRepository: Repository<Token> = getManager().getRepository(
+    //   Token
+    // );
+
     //email value checking
     const name = ctx.request.body.name;
     const password = ctx.request.body.password;
@@ -64,11 +71,24 @@ export default class UserController {
       email: name,
     });
 
+    const tokenToBeSaved: Token = new Token();
+
+    //Generate token
+    const token = generateToken(user.name, user.email, user.password);
+
+    const refreshToken = generateRefresh(user.name, user.email);
+
     //email checking
     if (user) {
       //password hashed checking
       if (comparePassword(user.password, password)) {
         // return OK status code and loaded user object
+        //save token token db
+        tokenToBeSaved.Id = user.id;
+        tokenToBeSaved.token = encoded(token);
+        tokenToBeSaved.reToken = encoded(refreshToken);
+        tokenToBeSaved.tokenProvider = "local";
+        token;
         ctx.status = 200;
         ctx.body = user;
       }
@@ -98,17 +118,10 @@ export default class UserController {
     // validate user entity
     const errors: ValidationError[] = await validate(userToBeSaved); // errors is an array of validation errors
 
-    //Generate token
-    const token = generateToken(
-      userToBeSaved.name,
-      userToBeSaved.email,
-      userToBeSaved.password
-    );
-
-    const refreshToken = generateRefresh(
-      userToBeSaved.name,
-      userToBeSaved.email
-    );
+    // const refreshToken = generateRefresh(
+    //   userToBeSaved.name,
+    //   userToBeSaved.email
+    // );
 
     //Error Checking
     if (errors.length > 0) {
@@ -143,15 +156,6 @@ export default class UserController {
       // save the user contained in the POST body
       const user = await userRepository.save(userToBeSaved);
       // return CREATED status code and updated user
-      //token value cookies add
-
-      ctx.cookies.set("access-token", token, {
-        maxAge: 1000 * 60 * 60,
-        httpOnly: true,
-      });
-      ctx.cookies.set("refresh-token", refreshToken, {
-        httpOnly: true,
-      });
       ctx.status = 201;
       ctx.body = user;
     }
@@ -261,10 +265,10 @@ export default class UserController {
   }
 
   //local token delete => logout
-  @request("logout", "/user/logout")
-  @summary("Delete user token")
-  public static async logoutUser(ctx: BaseContext): Promise<void> {
-    ctx.cookies.set("access-token");
-    ctx.status = 204;
-  }
+  // @request("logout", "/user/logout")
+  // @summary("Delete user token")
+  // public static async logoutUser(ctx: BaseContext): Promise<void> {
+  //   ctx.cookies.set("access-token");
+  //   ctx.status = 204;
+  // }
 }

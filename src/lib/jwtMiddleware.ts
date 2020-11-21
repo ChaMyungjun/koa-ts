@@ -11,6 +11,7 @@ import {
   Equal,
   Not,
 } from "typeorm";
+import { decode } from "querystring";
 
 //token check url
 const CHECK_TOKEN_KAKAO = "https://kapi.kakao.com/v1/user/access_token_info";
@@ -27,11 +28,33 @@ const jwtMiddleware = async (ctx: BaseContext, next: any) => {
   if (!tokenSocial) return next();
 
   //loacl login token checking
-  const tokenLocal = ctx.cookies.get("access-token");
+  // const tokenLocal = ctx.cookies.get("access-token");
+
+  //Date now (time)
+  const now = Math.floor(Date.now() / 1000);
 
   //social log in cheking token
   tokenSocial.map(async (cur, index) => {
-    const now = Math.floor(Date.now() / 1000);
+    //local token checking
+    if (cur.tokenProvider === "local") {
+      const decodedLocalToken = decoded(cur.token);
+      const decodedLocalRefreshToken = decoded(cur.reToken);
+      try {
+        if (decodedLocalToken.exp - now < 60 * 40) {
+          tokenRepository.findOne({
+            Id: Not(Equal(tokenSocial[index].Id)),
+            token: decodedLocalRefreshToken,
+            reToken: Not(Equal(tokenSocial[index].reToken)),
+            tokenProvider: Not(Equal(tokenSocial[index].tokenProvider)),
+          });
+          return next();
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    //kakao social token checking
     if (cur.tokenProvider === "kakao") {
       const decodedKakaoToken = decoded(cur.token);
       try {
@@ -85,6 +108,8 @@ const jwtMiddleware = async (ctx: BaseContext, next: any) => {
             .then((res) => {
               const resultToken = res;
               console.log(res);
+
+              //access-token re encoding
               // await tokenRepository.findOne({
               //   token: resultToken.access_token;
               // })
@@ -99,6 +124,8 @@ const jwtMiddleware = async (ctx: BaseContext, next: any) => {
         }
         console.error(err.response.data);
       }
+    } else {
+      next();
     }
 
     //naver token checking
@@ -130,6 +157,7 @@ const jwtMiddleware = async (ctx: BaseContext, next: any) => {
             })
             .then((res) => {
               const resultToken = res;
+
               console.log(resultToken);
             })
             .catch((err) => {
@@ -141,29 +169,29 @@ const jwtMiddleware = async (ctx: BaseContext, next: any) => {
     }
   });
 
-  if (!tokenLocal) {
-    return next();
-  }
+  // if (!tokenLocal) {
+  //   return next();
+  // }
 
   //local log in checking token
-  try {
-    const decodedLocalToken = decoded(tokenLocal);
-    console.log(decodedLocalToken);
-    const now = Math.floor(Date.now() / 1000);
+  // try {
+  //   const decodedLocalToken = decoded(tokenLocal);
+  //   console.log(decodedLocalToken);
+  //   const now = Math.floor(Date.now() / 1000);
 
-    //require refreshToken changing
-    if (decodedLocalToken.access) {
-      ctx.cookies.set("access-token", {
-        maxAge: 1000 * 60 * 60,
-        httpOnly: true,
-      });
-    }
-    return next();
-  } catch (err) {
-    console.error(err);
-  }
+  //   //require refreshToken changing
+  //   if (decodedLocalToken.access) {
+  //     ctx.cookies.set("access-token", {
+  //       maxAge: 1000 * 60 * 60,
+  //       httpOnly: true,
+  //     });
+  //   }
+  //   return next();
+  // } catch (err) {
+  //   console.error(err);
+  // }
 
-  return next();
+  // return next();
 };
 
 export default jwtMiddleware;

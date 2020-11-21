@@ -17,7 +17,7 @@ protectedRouter.post("/user/register", user.createUser); //register
 protectedRouter.put("/user/modify", user.updateUser); //modify
 protectedRouter.delete("/users/:id", user.deleteUser); //specified member delete
 protectedRouter.delete("/testusers", user.deleteTestUsers); // All member delete
-protectedRouter.post("/user/logout", user.logoutUser); //user logout
+//protectedRouter.post("/user/logout", user.logoutUser); //user logout
 
 //kakao URL, API Key, code value
 const kakaoKey = {

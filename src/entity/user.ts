@@ -71,6 +71,9 @@ export const generateRefresh = (name: any, email: any) => {
   return token;
 };
 
-// export const reGenerateToken = (refresh: any) => {
-//   const token = 
-// }
+export const reGenerateToken = (refresh: any) => {
+  const token = jwt.sign({ refresh }, process.env.JWT_SECRET, {
+    expiresIn: "1h",
+  });
+  return token;
+};
