@@ -19,6 +19,7 @@ import {
 } from "../entity/user";
 
 import { Token, encoded } from "../entity/token";
+import { Company } from "src/entity/company";
 
 @responsesAll({
   200: { description: "success" },
@@ -171,6 +172,7 @@ export default class UserController {
   public static async updateUser(ctx: BaseContext): Promise<void> {
     // get a user repository to perform operations with user
     const userRepository: Repository<User> = getManager().getRepository(User);
+    //const companyRepositoyry: Repository<Company> = getManager().getRepository(Company);
 
     // update the user by specified id
     // build up entity user to be updated
