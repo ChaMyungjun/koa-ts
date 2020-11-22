@@ -3,7 +3,7 @@ import { Equal, getManager, Not, Repository } from "typeorm";
 import { request, summary, responsesAll, tagsAll } from "koa-swagger-decorator";
 import { Company } from "../entity/company";
 import { validate, ValidationError } from "class-validator";
-import { company } from ".";
+//import { company } from ".";
 
 @responsesAll({
   200: { description: "success" },

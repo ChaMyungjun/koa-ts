@@ -19,7 +19,7 @@ import {
 } from "../entity/user";
 
 import { Token, encoded } from "../entity/token";
-import { Company } from "src/entity/company";
+//import { Company } from "src/entity/company";
 
 @responsesAll({
   200: { description: "success" },
