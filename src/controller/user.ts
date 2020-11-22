@@ -267,10 +267,9 @@ export default class UserController {
   }
 
   //local token delete => logout
-  // @request("logout", "/user/logout")
-  // @summary("Delete user token")
-  // public static async logoutUser(ctx: BaseContext): Promise<void> {
-  //   ctx.cookies.set("access-token");
-  //   ctx.status = 204;
-  // }
+  @request("post", "/user/logout")
+  @summary("Delete user token")
+  public static async logoutUser(ctx: BaseContext): Promise<void> {
+    console.log("logout");
+  }
 }

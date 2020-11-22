@@ -69,7 +69,6 @@ protectedRouter.get("/kakao/login", passport.authenticate("kakao-login"));
 //naver Routes
 protectedRouter.get("/naver/login", passport.authenticate("naver-login"));
 
-
 //company data getting
 protectedRouter.post("/company/register", company.createCompany);
 
@@ -92,7 +91,8 @@ protectedRouter.get(
 );
 
 // social logout
-// protectedRouter.get("/kakao/logout", passport.authenticate);
+// delete token in db
+protectedRouter.post("/user/logout", user.logoutUser);
 
 // Swagger endpoint
 protectedRouter.swagger({

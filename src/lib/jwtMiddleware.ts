@@ -12,6 +12,7 @@ import {
   Not,
 } from "typeorm";
 import { decode } from "querystring";
+import { networkInterfaces } from "os";
 
 //token check url
 const CHECK_TOKEN_KAKAO = "https://kapi.kakao.com/v1/user/access_token_info";
@@ -51,6 +52,7 @@ const jwtMiddleware = async (ctx: BaseContext, next: any) => {
         }
       } catch (err) {
         console.error(err);
+        return next();
       }
     }
 
