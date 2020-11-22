@@ -91,7 +91,7 @@ protectedRouter.get(
   })
 );
 
-//social logout
+// social logout
 // protectedRouter.get("/kakao/logout", passport.authenticate);
 
 // Swagger endpoint

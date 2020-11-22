@@ -1,5 +1,4 @@
 import Koa from "koa";
-import jwt from "koa-jwt";
 import bodyParser from "koa-bodyparser";
 import helmet from "koa-helmet";
 import cors from "@koa/cors";
@@ -10,6 +9,7 @@ import "reflect-metadata";
 import AdminBro from "admin-bro";
 import { buildRouter } from "@admin-bro/koa";
 import { Database, Resource } from "@admin-bro/typeorm";
+import { validate } from "class-validator";
 
 import { User } from "./entity/user";
 import { Token } from "./entity/token";
@@ -19,7 +19,6 @@ import { config } from "./config";
 import { unprotectedRouter } from "./unprotectedRoutes";
 import { protectedRouter } from "./protectedRoutes";
 import { cron } from "./cron";
-import { validate } from "class-validator";
 
 import jwtMiddleware from "./lib/jwtMiddleware";
 

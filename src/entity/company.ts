@@ -19,7 +19,7 @@ export class Company extends BaseEntity {
     length: 80,
   })
   @Length(3, 80)
-  comapnyName: string;
+  companyName: string;
 
   //name
   @Column({

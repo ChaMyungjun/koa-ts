@@ -198,8 +198,8 @@ export default class UserController {
     } else if (
       await userRepository.findOne({
         id: Not(Equal(userToBeUpdated.id)),
-        email: userToBeUpdated.email,
-        password: userToBeUpdated.password,
+        email: Not(Equal(userToBeUpdated.email)),
+        password: Not(Equal(userToBeUpdated.password)),
       })
     ) {
       // return BAD REQUEST status code and email already exists error
