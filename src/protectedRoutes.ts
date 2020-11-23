@@ -17,7 +17,7 @@ protectedRouter.post("/user/register", user.createUser); //register
 protectedRouter.put("/user/modify", user.updateUser); //modify
 protectedRouter.delete("/users/:id", user.deleteUser); //specified member delete
 protectedRouter.delete("/testusers", user.deleteTestUsers); // All member delete
-//protectedRouter.post("/user/logout", user.logoutUser); //user logout
+protectedRouter.post("/user/logout", user.logoutUser); //user logout
 
 //kakao URL, API Key, code value
 const kakaoKey = {
@@ -39,6 +39,7 @@ passport.use(
   new kakaoStrategy(
     kakaoKey,
     (accessToken: any, refreshToken: any, profile: any) => {
+      console.log("kakao");
       console.log(profile);
       if (accessToken) {
         KakaogetToken(accessToken, refreshToken, profile);
@@ -54,6 +55,7 @@ passport.use(
   new naverStrategy(
     naverKey,
     (accessToken: any, refreshToken: any, profile: any) => {
+      console.log("naver");
       //USER.info is profile
       if (accessToken) {
         console.log(profile);

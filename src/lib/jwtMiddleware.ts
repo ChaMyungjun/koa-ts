@@ -4,15 +4,7 @@
 import { BaseContext } from "koa";
 import axios from "axios";
 import { Token, decoded } from "../entity/token";
-import {
-  Repository,
-  getManager,
-  AdvancedConsoleLogger,
-  Equal,
-  Not,
-} from "typeorm";
-import { decode } from "querystring";
-import { networkInterfaces } from "os";
+import { Repository, getManager, Equal, Not } from "typeorm";
 
 //token check url
 const CHECK_TOKEN_KAKAO = "https://kapi.kakao.com/v1/user/access_token_info";
@@ -37,6 +29,7 @@ const jwtMiddleware = async (ctx: BaseContext, next: any) => {
   //social log in cheking token
   tokenSocial.map(async (cur, index) => {
     //local token checking
+
     if (cur.tokenProvider === "local") {
       const decodedLocalToken = decoded(cur.token);
       const decodedLocalRefreshToken = decoded(cur.reToken);
@@ -71,6 +64,7 @@ const jwtMiddleware = async (ctx: BaseContext, next: any) => {
               return next();
             }
           });
+        return next();
       } catch (err) {
         if (err.response.data.code === -401) {
           const decodedKakaoRefresh = decoded(cur.reToken);
@@ -125,9 +119,9 @@ const jwtMiddleware = async (ctx: BaseContext, next: any) => {
           console.error("Internel Server Error in Kakao");
         }
         console.error(err.response.data);
+        console.log(err);
+        return next();
       }
-    } else {
-      next();
     }
 
     //naver token checking
@@ -143,6 +137,7 @@ const jwtMiddleware = async (ctx: BaseContext, next: any) => {
             const resultToken = res;
             console.log(resultToken.data);
           });
+        return next();
       } catch (err) {
         if (err.response.data.resultcode === "024") {
           console.error(err.response.data.message);
@@ -167,61 +162,12 @@ const jwtMiddleware = async (ctx: BaseContext, next: any) => {
               ctx.redirect("/naver/login");
             });
         }
+        console.log(err);
+        return next();
       }
     }
   });
-
-  // if (!tokenLocal) {
-  //   return next();
-  // }
-
-  //local log in checking token
-  // try {
-  //   const decodedLocalToken = decoded(tokenLocal);
-  //   console.log(decodedLocalToken);
-  //   const now = Math.floor(Date.now() / 1000);
-
-  //   //require refreshToken changing
-  //   if (decodedLocalToken.access) {
-  //     ctx.cookies.set("access-token", {
-  //       maxAge: 1000 * 60 * 60,
-  //       httpOnly: true,
-  //     });
-  //   }
-  //   return next();
-  // } catch (err) {
-  //   console.error(err);
-  // }
-
-  // return next();
+  return next();
 };
 
 export default jwtMiddleware;
-
-// axios({
-//     method: "POST",
-//     url: `${CHECK_TOKEN_KAKAO}`,
-//     headers: { Authorization: `Bearer ${decodedKakaoToken}` },
-//   });
-
-//Sample data(after encoding)
-/**
- * 
- * [
-  Token {
-    index: 7,
-    tokenProvider: 'kakao',
-    Id: 1535748268,
-    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJKNkY0OXdObTBZdFF5em5HSG5WWGRGSGx5VWszMndubWxXaWpjQW85ZFJrQUFBRjEzX0Z2YWciLCJpYXQiOjE2MDU3Nzk5NDIsImV4cCI6MTYwNjM4NDc0MiwiaXNzIjoiS29hIiwic3ViIjoidG9rZW4ifQ.2yubtSnxSkCLkRWUg1TbK_3mIxNXZWXFBxIe_941kJ4',
-    reToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyZWZyZXNoIjoiNktkc3BfdlZ0My10Xzhsemd2UFdKZjlvdjlHdm4zZGhOU3JpSmdvOWRSa0FBQUYxM19GdmFRIiwiaWF0IjoxNjA1Nzc5OTQyfQ.x9JfeA03qOAAzbd8QGifAA41ZmOPVhCIFz88YIVA7AY'
-  },
-  Token {
-    index: 8,
-    tokenProvider: 'naver',
-    Id: 89567170,
-    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJBQUFBT0ctdVQ4MUpfQVUza1U0b29qRjFObEJnc25EcVRJVk9XMFh5RWZ3QWNLSnVpbmJRelEtRnNRNW9ZaU84T3huZVBUcjNvVFdLTGxkbGt3enlTbUFubGpjIiwiaWF0IjoxNjA1Nzc5OTY1LCJleHAiOjE2MDYzODQ3NjUsImlzcyI6IktvYSIsInN1YiI6InRva2VuIn0.sUX8BRQrMP2hccVVx-slz5RPJOgTuGJLfkbW8TytD14',
-    reToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyZWZyZXNoIjoiQjc3eVI1Rmc3dUhyYjJHd1lsZHVSSUR5OEkzUEtKRkxZUGZ0YVgxY1NpczMyS2puV3FKcEVHZXVZYnNoNGRJM09jSWtpc3ZMc0hScnFSeWMwRUhlU2lzeWdvejJ3SDRCV3o3S2lpOXd1ODVocGdTUXVNMk04UnNyN28wUWN3RlJyRTdTIiwiaWF0IjoxNjA1Nzc5OTY1fQ.YtCjUIn2D5rI8p5mRg1ewwofUMY6D3RBlSMzvN_e0Kg'
-  }
-]
- * 
- */

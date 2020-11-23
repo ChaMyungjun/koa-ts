@@ -45,7 +45,7 @@ export async function KakaogetToken(
         });
         console.log("already exists");
       } catch (err) {
-        console.error(err);
+        console.error("Error!");
       }
     } else {
       const token = await tokenRepsitory.save(tokenToBeSaved);
