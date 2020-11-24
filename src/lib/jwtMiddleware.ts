@@ -3,8 +3,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { BaseContext } from "koa";
 import axios from "axios";
-import { Token, decoded } from "../entity/token";
+import { Token, decoded, encoded } from "../entity/token";
 import { Repository, getManager, Equal, Not } from "typeorm";
+import { reGenerateToken } from "src/entity/user";
 
 //token check url
 const CHECK_TOKEN_KAKAO = "https://kapi.kakao.com/v1/user/access_token_info";
@@ -33,11 +34,12 @@ const jwtMiddleware = async (ctx: BaseContext, next: any) => {
     if (cur.tokenProvider === "local") {
       const decodedLocalToken = decoded(cur.token);
       const decodedLocalRefreshToken = decoded(cur.reToken);
+      const token = reGenerateToken(decodedLocalRefreshToken);
       try {
         if (decodedLocalToken.exp - now < 60 * 40) {
           tokenRepository.findOne({
             Id: Not(Equal(tokenSocial[index].Id)),
-            token: decodedLocalRefreshToken,
+            token: token,
             reToken: Not(Equal(tokenSocial[index].reToken)),
             tokenProvider: Not(Equal(tokenSocial[index].tokenProvider)),
           });
@@ -82,44 +84,49 @@ const jwtMiddleware = async (ctx: BaseContext, next: any) => {
                 tokenRepository.findOne({
                   tokenProvider: Not(Equal(tokenSocial[index].tokenProvider)),
                   Id: Not(Equal(tokenSocial[index].Id)),
-                  token: res.data.access_token,
+                  token: encoded(res.data.access_token),
                   reToken: Not(Equal(tokenSocial[index].reToken)),
                 });
               }
             })
             .catch((err) => {
-              console.error(err);
-              console.log("Expired");
+              console.log("Log Out!");
             });
         } else if (decodedKakaoToken.exp - now < 60 * 40) {
-          const decodedKakaoRefresh = decoded(cur.reToken);
-          await axios
-            .get(`${GENERATE_TOKEN_KAKAO}`, {
-              params: {
-                grant_type: "refresh_token",
-                client_id: `${process.env.kakao_rest_api}`,
-                refresh_token: `${decodedKakaoRefresh.access}`,
-              },
-            })
-            .then((res) => {
-              const resultToken = res;
-              console.log(res);
+          const decodedKakaoToken = decoded(cur.token);
+          // await axios
+          //   .get(`${GENERATE_TOKEN_KAKAO}`, {
+          //     params: {
+          //       grant_type: "refresh_token",
+          //       client_id: `${process.env.kakao_rest_api}`,
+          //       refresh_token: `${decodedKakaoRefresh.access}`,
+          //     },
+          //   })
+          //   .then((res) => {
+          //     const resultToken = res;
+          //     console.log(res);
 
-              //access-token re encoding
-              // await tokenRepository.findOne({
-              //   token: resultToken.access_token;
-              // })
-            })
-            .catch((err) => {
-              console.log("Expired");
-            });
+          //     //access-token re encoding
+          //     // await tokenRepository.findOne({
+          //     //   token: resultToken.access_token;
+          //     // })
+          //   })
+          //   .catch((err) => {
+          //     console.log("Expired");
+          //   });
+          tokenRepository.findOne({
+            tokenProvider: Not(Equal(tokenSocial[index].tokenProvider)),
+            Id: Not(Equal(tokenSocial[index].Id)),
+            token: encoded(decodedKakaoToken),
+            reToken: Not(Equal(tokenSocial[index].reToken)),
+          });
         } else if (err.response.data.code === -2) {
           console.error("TypeError: token info is wrong");
         } else if (err.response.data.code === -1) {
           console.error("Internel Server Error in Kakao");
         }
         console.error(err.response.data);
-        console.log(err);
+        console.log("Token Expired!");
         return next();
       }
     }
@@ -140,7 +147,7 @@ const jwtMiddleware = async (ctx: BaseContext, next: any) => {
         return next();
       } catch (err) {
         if (err.response.data.resultcode === "024") {
-          console.error(err.response.data.message);
+          console.error("token type error");
         } else if (decodedNaverToken.exp - now < 60 * 40) {
           const decodedNaverRefresh = decoded(cur.reToken);
           await axios
@@ -148,21 +155,19 @@ const jwtMiddleware = async (ctx: BaseContext, next: any) => {
               params: {
                 client_id: `${process.env.naver_rest_api}`,
                 client_secret: `${process.env.naver_secret_key}`,
-                refresh_token: `${decodedNaverToken}`,
+                refresh_token: `${decodedNaverRefresh}`,
                 grant_type: "refresh_token",
               },
             })
             .then((res) => {
               const resultToken = res;
-
               console.log(resultToken);
             })
             .catch((err) => {
-              console.log("Expired");
-              ctx.redirect("/naver/login");
+              console.log("Log Out!");
             });
         }
-        console.log(err);
+        console.log("Error!");
         return next();
       }
     }
