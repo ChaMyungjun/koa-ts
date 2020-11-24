@@ -13,6 +13,8 @@ import { validate } from "class-validator";
 
 import { User } from "./entity/user";
 import { Token } from "./entity/token";
+import { Company } from "./entity/company";
+import { Payment } from "./entity/payment";
 
 import { logger } from "./logger";
 import { config } from "./config";
@@ -28,6 +30,7 @@ AdminBro.registerAdapter({ Database, Resource });
 // create connection with database
 // note that its not active database connection
 // TypeORM creates you connection pull to uses connections from pull on your requests
+
 try {
   //typeorm connection create
   createConnection({
@@ -72,6 +75,36 @@ try {
           },
           {
             resource: Token,
+            options: {
+              properties: {
+                name: {
+                  isVisible: {
+                    list: true,
+                    filter: true,
+                    show: true,
+                    edit: true,
+                  },
+                },
+              },
+            },
+          },
+          {
+            resource: Payment,
+            options: {
+              properties: {
+                name: {
+                  isVisible: {
+                    list: true,
+                    filter: true,
+                    show: true,
+                    edit: true,
+                  },
+                },
+              },
+            },
+          },
+          {
+            resource: Company,
             options: {
               properties: {
                 name: {

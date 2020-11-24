@@ -72,6 +72,8 @@
     "class-validator": "^0.11.1",
     "cron": "^1.8.2",
     "dotenv": "^8.2.0",
+    "iamport-rest-client-nodejs": "^0.9.4",
+    "iamporter": "^1.4.2",
     "koa": "^2.11.0",
     "koa-bodyparser": "^4.3.0",
     "koa-helmet": "^5.2.0",

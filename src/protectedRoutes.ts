@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { SwaggerRouter } from "koa-swagger-decorator";
 import passport from "koa-passport";
-import { user, company } from "./controller";
+import { user, company, payment } from "./controller";
 
 import { KakaogetToken } from "./lib/kakao";
 import { NavergetToken } from "./lib/naver";
@@ -95,6 +95,9 @@ protectedRouter.get(
 // social logout
 // delete token in db
 protectedRouter.post("/user/logout", user.logoutUser);
+
+//Payment ROUTES
+protectedRouter.post("/payment/create", payment.createPaymentInfo);
 
 // Swagger endpoint
 protectedRouter.swagger({
