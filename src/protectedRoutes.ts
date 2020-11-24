@@ -79,7 +79,7 @@ protectedRouter.get(
   "/user/kakao/auth",
   passport.authenticate("kakao-login", {
     successRedirect: "/",
-    failureRedirect: "/test",
+    failureRedirect: "/",
   })
 );
 

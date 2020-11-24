@@ -4,7 +4,7 @@ import { request, responsesAll, summary } from "koa-swagger-decorator";
 
 import { IamportPayment } from "../lib/payment";
 
-import { Payment, uuidv4, getToken } from "../entity/payment";
+import { Payment, uuidv4, getToken, issueBilling } from "../entity/payment";
 import { getManager, Repository } from "typeorm";
 import { validate, ValidationError } from "class-validator";
 
@@ -28,14 +28,11 @@ export default class PaymentController {
     //craete random customer uuid
     const uuid = uuidv4();
 
-    //token showing
-    console.log("getting Token:", await getToken());
-
     //create entity
     //build up entity payment info to be saved
     const paymentToBeSaved: Payment = new Payment();
 
-    //validate payment entity
+    //v alidate payment entity
     const errors: ValidationError[] = await validate(paymentToBeSaved);
 
     paymentToBeSaved.cardNumber = ctx.request.body.cardNumber;
@@ -43,16 +40,27 @@ export default class PaymentController {
     paymentToBeSaved.birth = ctx.request.body.birth;
     paymentToBeSaved.cardPassword2digit = ctx.request.body.cardPassword2digit;
     paymentToBeSaved.customerUid = uuid;
+    
+    //showing biling key
+    console.log(
+      await issueBilling(
+        paymentToBeSaved.customerUid,
+        await getToken(),
+        paymentToBeSaved.cardNumber,
+        paymentToBeSaved.cardExpire,
+        paymentToBeSaved.birth,
+        paymentToBeSaved.cardPassword2digit
+      )
+    );
 
     if (errors.length > 0) {
       ctx.status = 400;
       ctx.body = errors;
-    } else if ((await paymentRepository.find({ relations: ["user"] }))) {
+    } else if (await paymentRepository.find({ relations: ["user"] })) {
       ctx.status = 400;
       ctx.body = "User already has card info data";
     } else {
       const payment = await paymentRepository.save(paymentToBeSaved);
-
       ctx.status = 201;
       ctx.body = payment;
     }

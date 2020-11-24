@@ -5,7 +5,7 @@ import { BaseContext } from "koa";
 import axios from "axios";
 import { Token, decoded, encoded } from "../entity/token";
 import { Repository, getManager, Equal, Not } from "typeorm";
-import { reGenerateToken } from "src/entity/user";
+import { reGenerateToken } from "../entity/user";
 
 //token check url
 const CHECK_TOKEN_KAKAO = "https://kapi.kakao.com/v1/user/access_token_info";

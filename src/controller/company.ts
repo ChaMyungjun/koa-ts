@@ -63,14 +63,14 @@ export default class CompanyController {
     if (errors.length > 0) {
       ctx.status = 400;
       ctx.body = errors;
-    } else if (await companyRegistory.findOne(companyToBeUpdated.id)) {
+    } else if (await companyRegistory.findOne(companyToBeUpdated.index)) {
       //check if a company with the specified id exists
       //return a BAD REQUEST status code and error message
       ctx.status = 400;
       ctx.bdoy = "Error!";
     } else if (
       await companyRegistory.findOne({
-        id: Not(Equal(companyToBeUpdated.id)),
+        index: Not(Equal(companyToBeUpdated.index)),
         companyName: Not(Equal(companyToBeUpdated.companyName)),
         name: Not(Equal(companyToBeUpdated.name)),
         position: Not(Equal(companyToBeUpdated.position)),

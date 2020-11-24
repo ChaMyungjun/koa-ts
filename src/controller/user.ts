@@ -85,7 +85,7 @@ export default class UserController {
       if (comparePassword(user.password, password)) {
         // return OK status code and loaded user object
         //save token token db
-        tokenToBeSaved.Id = user.id;
+        tokenToBeSaved.Id = user.index;
         tokenToBeSaved.token = encoded(token);
         tokenToBeSaved.reToken = encoded(refreshToken);
         tokenToBeSaved.tokenProvider = "local";
@@ -177,7 +177,7 @@ export default class UserController {
     // update the user by specified id
     // build up entity user to be updated
     const userToBeUpdated: User = new User();
-    userToBeUpdated.id = +ctx.params.id || 0; // will always have a number, this will avoid errors
+    userToBeUpdated.index = +ctx.params.index || 0; // will always have a number, this will avoid errors
     userToBeUpdated.email = ctx.request.body.email;
     userToBeUpdated.password = hashedPassword(ctx.request.body.password);
 
@@ -188,7 +188,7 @@ export default class UserController {
       // return BAD REQUEST status code and errors array
       ctx.status = 400;
       ctx.body = errors;
-    } else if (await userRepository.findOne(userToBeUpdated.id)) {
+    } else if (await userRepository.findOne(userToBeUpdated.index)) {
       // check if a user with the specified id exists
       // return a BAD REQUEST status code and error message
       ctx.status = 400;
@@ -199,7 +199,7 @@ export default class UserController {
       ctx.body = "The specified password doesn't matched";
     } else if (
       await userRepository.findOne({
-        id: Not(Equal(userToBeUpdated.id)),
+        index: Not(Equal(userToBeUpdated.index)),
         email: Not(Equal(userToBeUpdated.email)),
         password: Not(Equal(userToBeUpdated.password)),
       })
@@ -217,8 +217,8 @@ export default class UserController {
   }
 
   //{id}User delete the info
-  @request("delete", "/users/{id}")
-  @summary("Delete user by id")
+  @request("delete", "/users/{index}")
+  @summary("Delete user by index")
   @path({
     id: { type: "number", required: true, description: "id of user" },
   })
@@ -228,7 +228,7 @@ export default class UserController {
 
     // find the user by specified id
     const userToRemove: User | undefined = await userRepository.findOne(
-      +ctx.params.id || 0
+      +ctx.params.index || 0
     );
     if (!userToRemove) {
       // return a BAD REQUEST status code and error message

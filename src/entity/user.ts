@@ -16,7 +16,7 @@ import { Payment } from "./payment";
 @Entity()
 export class User extends BaseEntity {
   @PrimaryGeneratedColumn()
-  id: number;
+  index: number;
 
   //name
   @Column({

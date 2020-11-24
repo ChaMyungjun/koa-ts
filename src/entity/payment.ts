@@ -12,6 +12,7 @@ import {
 import axios from "axios";
 
 import { User } from "./user";
+import { ConsoleTransportOptions } from "winston/lib/winston/transports";
 
 @Entity()
 export class Payment extends BaseEntity {
@@ -80,6 +81,9 @@ export async function getToken() {
   })
     .then((res) => {
       console.log(res.data);
+      if (res.data.response.code === 0) {
+        console.log("access_token issued");
+      }
       token = res.data.response.access_token;
     })
     .catch((err) => {
@@ -97,7 +101,27 @@ export async function issueBilling(
   password2digit: any
 ) {
   const billingURL = `https://api.iamport.kr/subscribe/customers/${customeruId}`;
-  const billing = await axios({
+  const firstPayment = "https://api.iamport.kr/subscribe/payments/onetime/";
+
+  await axios({
+    url: firstPayment,
+    method: "POST",
+    headers: { Authorization: `${accessToken}` },
+    data: {
+      card_number: cardNumber,
+      expiry: cardExpire,
+      merchant_uid: "order_monthly_001",
+      amount: 200,
+    },
+  })
+    .then((res) => {
+      console.log(res.data);
+    })
+    .catch((err) => {
+      console.log(err.response.data);
+    });
+
+  await axios({
     url: billingURL,
     method: "POST",
     headers: { Authorization: `${accessToken}` },
@@ -107,6 +131,11 @@ export async function issueBilling(
       birth: userBirth,
       pwd_2digit: password2digit,
     },
-  });
-  return billing;
+  })
+    .then((res) => {
+      console.log(res.data);
+    })
+    .catch((err) => {
+      console.error(err.response.data);
+    });
 }
