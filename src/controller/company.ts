@@ -31,7 +31,7 @@ export default class CompanyController {
       ctx.status = 400;
       ctx.body = errors;
       //comapny db in user.email checking
-    } else if (!(await companyRepsitory.find({ relations: ["user"] }))) {
+    } else if (await companyRepsitory.find({ relations: ["user"] })) {
       ctx.status = 400;
       ctx.body = "Cannot find user";
     } else {

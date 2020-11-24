@@ -53,7 +53,6 @@ export const Paymentschema = {
   cardPassword2digit: { type: "string", required: true, example: "1200" },
 };
 
-
 //customer uudi generate
 export function uuidv4() {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
@@ -68,6 +67,8 @@ export async function getToken() {
   const impKey = process.env.iamporter_api_key;
   const imptSecret = process.env.iamporter_api_secret;
 
+  let token: any = null;
+
   await axios({
     url: tokenURL,
     method: "POST",
@@ -79,12 +80,12 @@ export async function getToken() {
   })
     .then((res) => {
       console.log(res.data);
-      return(res.data.response.access_token
-        );
+      token = res.data.response.access_token;
     })
     .catch((err) => {
       console.error(err.response.data);
     });
+  return token;
 }
 
 export async function issueBilling(

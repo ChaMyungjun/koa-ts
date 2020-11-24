@@ -29,7 +29,7 @@ export default class PaymentController {
     const uuid = uuidv4();
 
     //token showing
-    console.log(await getToken());
+    console.log("getting Token:", await getToken());
 
     //create entity
     //build up entity payment info to be saved
@@ -43,11 +43,11 @@ export default class PaymentController {
     paymentToBeSaved.birth = ctx.request.body.birth;
     paymentToBeSaved.cardPassword2digit = ctx.request.body.cardPassword2digit;
     paymentToBeSaved.customerUid = uuid;
-    
+
     if (errors.length > 0) {
       ctx.status = 400;
       ctx.body = errors;
-    } else if (!(await paymentRepository.find({ relations: ["user"] }))) {
+    } else if ((await paymentRepository.find({ relations: ["user"] }))) {
       ctx.status = 400;
       ctx.body = "User already has card info data";
     } else {

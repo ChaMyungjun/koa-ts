@@ -59,7 +59,7 @@ export const userSchema = {
   password: {
     type: "string",
     required: true,   
-  },                                  
+  },
 };
 
 //password hashed before input db
