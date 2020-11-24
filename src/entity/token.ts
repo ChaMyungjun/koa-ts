@@ -1,7 +1,16 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Entity, Column, PrimaryGeneratedColumn, BaseEntity } from "typeorm";
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  BaseEntity,
+  OneToOne,
+  JoinColumn,
+} from "typeorm";
 import { Length } from "class-validator";
 import jwt from "jsonwebtoken";
+import { User } from "./user";
 
 @Entity()
 export class Token extends BaseEntity {
@@ -33,6 +42,10 @@ export class Token extends BaseEntity {
   })
   @Length(0, 400)
   reToken: string;
+
+  @OneToOne((type) => User, (user) => user.token)
+  @JoinColumn()
+  user: User;
 }
 
 //token schema
@@ -71,7 +84,6 @@ export function decoded(token: any) {
   });
   return decodeToken;
 }
-
 
 /**
  *

@@ -43,7 +43,7 @@ export default class CompanyController {
     }
   }
 
-  @request("post", "/company/modify")
+  @request("patch", "/company/modify")
   @summary("company info data modiy")
   public static async modifyCompany(ctx: BaseContext): Promise<void> {
     const companyRegistory: Repository<Company> = getManager().getRepository(
@@ -85,7 +85,6 @@ export default class CompanyController {
     } else {
       // save the info contained in the PUT body
       const company = await companyRegistory.save(companyToBeUpdated);
-
       //return CREATE status code and updated company
       ctx.status = 201;
       ctx.body = company;

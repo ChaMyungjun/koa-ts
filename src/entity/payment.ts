@@ -12,7 +12,6 @@ import {
 import axios from "axios";
 
 import { User } from "./user";
-import { ConsoleTransportOptions } from "winston/lib/winston/transports";
 
 @Entity()
 export class Payment extends BaseEntity {
@@ -40,9 +39,9 @@ export class Payment extends BaseEntity {
   customerUid: string;
 
   //One User save One card
-  @OneToOne((type) => User, (user) => user.email)
+  @OneToOne((type) => User, (user) => user.payment)
   @JoinColumn()
-  user!: User;
+  user: User;
 }
 
 export const Paymentschema = {
@@ -81,13 +80,10 @@ export async function getToken() {
   })
     .then((res) => {
       console.log(res.data);
-      if (res.data.response.code === 0) {
-        console.log("access_token issued");
-      }
       token = res.data.response.access_token;
     })
     .catch((err) => {
-      console.error(err.response.data);
+      console.error(err.response.data.message);
     });
   return token;
 }
@@ -100,7 +96,7 @@ export async function issueBilling(
   userBirth: any,
   password2digit: any
 ) {
-  const billingURL = `https://api.iamport.kr/subscribe/customers/${customeruId}`;
+  const billingURL = `https://api.iamport.kr/subscribe/customers/s${customeruId}`;
   const firstPayment = "https://api.iamport.kr/subscribe/payments/onetime/";
 
   await axios({
@@ -112,6 +108,7 @@ export async function issueBilling(
       expiry: cardExpire,
       merchant_uid: "order_monthly_001",
       amount: 200,
+      name: "월간 이용권 결제",
     },
   })
     .then((res) => {
@@ -137,5 +134,33 @@ export async function issueBilling(
     })
     .catch((err) => {
       console.error(err.response.data);
+    });
+}
+
+export async function normalPayment(
+  accessToken: any,
+  customerUid: any,
+  merchantUid: any,
+  amount: any,
+  name: any
+) {
+  const paymentURL = "https://api.iamport.kr/subscribe/payments/again";
+
+  await axios({
+    url: paymentURL,
+    method: "POST",
+    headers: { Authorization: accessToken },
+    data: {
+      customerUid,
+      merchantUid,
+      amount,
+      name,
+    },
+  })
+    .then((res) => {
+      console.log(res);
+    })
+    .catch((err) => {
+      console.log(err);
     });
 }

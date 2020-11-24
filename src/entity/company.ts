@@ -58,9 +58,9 @@ export class Company extends BaseEntity {
   @Length(30, 80)
   image: string;
 
-  @OneToOne((type) => User, (user) => user.email)
+  @OneToOne((type) => User, (user) => user.company)
   @JoinColumn()
-  user!: User;
+  user: User;
 }
 
 export const Companyschema = {

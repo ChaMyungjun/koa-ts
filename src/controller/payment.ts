@@ -40,7 +40,7 @@ export default class PaymentController {
     paymentToBeSaved.birth = ctx.request.body.birth;
     paymentToBeSaved.cardPassword2digit = ctx.request.body.cardPassword2digit;
     paymentToBeSaved.customerUid = uuid;
-    
+
     //showing biling key
     console.log(
       await issueBilling(
@@ -53,16 +53,33 @@ export default class PaymentController {
       )
     );
 
-    if (errors.length > 0) {
+    console.log("UserIndex:",paymentToBeSaved.user);
+
+    if (errors.length > 0) {  
       ctx.status = 400;
       ctx.body = errors;
-    } else if (await paymentRepository.find({ relations: ["user"] })) {
+    } else if (!(await paymentRepository.find({ relations: ["user"] }))) {
       ctx.status = 400;
-      ctx.body = "User already has card info data";
+      ctx.body = "User doesn't exists";
+    } else if (
+      await paymentRepository.findOne({
+        cardNumber: paymentToBeSaved.cardNumber,
+      })
+    ) {
+      ctx.status = 400;
+      ctx.body = "CardNumber already exists";
+    } else if (
+      await paymentRepository.findOne({ birth: paymentToBeSaved.birth })
+    ) {
+      ctx.status = 400;
+      ctx.body = "Brith already exists";
     } else {
       const payment = await paymentRepository.save(paymentToBeSaved);
       ctx.status = 201;
       ctx.body = payment;
     }
+  }
+  public static async billingPayment(ctx:BaseContext): Promise<void> {
+    const billingPaymentRepository: Repository<Payment> = getManager().getRepository(Payment);
   }
 }

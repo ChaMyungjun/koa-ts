@@ -10,8 +10,11 @@ import {
 import { Length, IsEmail } from "class-validator";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
+
 import { Company } from "./company";
 import { Payment } from "./payment";
+import { Token } from "./token";
+import { flat } from "admin-bro";
 
 @Entity()
 export class User extends BaseEntity {
@@ -20,7 +23,7 @@ export class User extends BaseEntity {
 
   //name
   @Column({
-    length: 80,
+    nullable: true,
   })
   @Length(3, 80)
   name: string;
@@ -34,23 +37,27 @@ export class User extends BaseEntity {
 
   //password
   @Column({
-    length: 100,
+    nullable: true,
   })
   @Length(6, 100)
   password: string;
 
-  @OneToOne(() => Company)
+  @OneToOne(() => Company, (company) => company.user)
   @JoinColumn()
   company: Company;
 
-  @OneToOne(() => Payment)
+  @OneToOne(() => Payment, (payment) => payment.user)
   @JoinColumn()
   payment: Payment;
+
+  @OneToOne(() => Token, (token) => token.user)
+  @JoinColumn()
+  token: Token;
 }
 
 export const userSchema = {
   id: { type: "number", required: true, example: 1 },
-  name: { type: "string", required: true, example: "Javier" },
+  name: { type: "string", required: false, example: "Javier" },
   email: {
     type: "string",
     required: true,
@@ -58,7 +65,7 @@ export const userSchema = {
   },
   password: {
     type: "string",
-    required: true,   
+    required: false,
   },
 };
 

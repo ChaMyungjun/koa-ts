@@ -18,6 +18,9 @@ protectedRouter.put("/user/modify", user.updateUser); //modify
 protectedRouter.delete("/users/:id", user.deleteUser); //specified member delete
 protectedRouter.delete("/testusers", user.deleteTestUsers); // All member delete
 protectedRouter.post("/user/logout", user.logoutUser); //user logout
+// social logout
+// delete token in db
+protectedRouter.post("/user/logout", user.logoutUser);
 
 //kakao URL, API Key, code value
 const kakaoKey = {
@@ -74,6 +77,9 @@ protectedRouter.get("/naver/login", passport.authenticate("naver-login"));
 //company data getting
 protectedRouter.post("/company/register", company.createCompany);
 
+//comapany data modify
+protectedRouter.patch("/company/modify", company.modifyCompany);
+
 //kakao redirect
 protectedRouter.get(
   "/user/kakao/auth",
@@ -91,10 +97,6 @@ protectedRouter.get(
     failureRedirect: "/test",
   })
 );
-
-// social logout
-// delete token in db
-protectedRouter.post("/user/logout", user.logoutUser);
 
 //Payment ROUTES
 protectedRouter.post("/payment/create", payment.createPaymentInfo);
