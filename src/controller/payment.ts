@@ -1,33 +1,18 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { BaseContext } from "koa";
-import {
-  request,
-  body,
-  path,
-  responsesAll,
-  tagsAll,
-  summary,
-  formData,
-} from "koa-swagger-decorator";
+import { request, responsesAll, summary } from "koa-swagger-decorator";
 
 import { IamportPayment } from "../lib/payment";
 
-import { Payment, uuidv4, issueBilling, getToken } from "../entity/payment";
+import { Payment, uuidv4, getToken } from "../entity/payment";
 import { getManager, Repository } from "typeorm";
-import { company, payment, user } from ".";
 import { validate, ValidationError } from "class-validator";
-import { TextDecoder } from "util";
-
-import { Token } from "../entity/token";
 
 @responsesAll(["Payment"])
 export default class PaymentController {
   @request("post", "/payment/pay")
   @summary("payment User Product")
   public static async createOrder(ctx: BaseContext): Promise<void> {
-    console.log("payment");
-    console.log(ctx.status);
-
     const UserPayment = IamportPayment();
     console.log(UserPayment);
   }
@@ -35,41 +20,36 @@ export default class PaymentController {
   @request("post", "/payment/create")
   @summary("create payment info")
   public static async createPaymentInfo(ctx: BaseContext): Promise<void> {
-    console.log("create payment");
-    console.log(ctx.status);
-
     //get a payment to perform operations with paymenrt
     const paymentRepository: Repository<Payment> = getManager().getRepository(
       Payment
     );
 
+    //craete random customer uuid
     const uuid = uuidv4();
-    console.log(typeof uuid);
-    console.log(uuid);
+
+    //token showing
+    console.log(await getToken());
+
     //create entity
     //build up entity payment info to be saved
     const paymentToBeSaved: Payment = new Payment();
+
+    //validate payment entity
+    const errors: ValidationError[] = await validate(paymentToBeSaved);
+
     paymentToBeSaved.cardNumber = ctx.request.body.cardNumber;
     paymentToBeSaved.cardExpire = ctx.request.body.cardExpire;
     paymentToBeSaved.birth = ctx.request.body.birth;
     paymentToBeSaved.cardPassword2digit = ctx.request.body.cardPassword2digit;
     paymentToBeSaved.customerUid = uuid;
-
-    //validate payment entity
-    const errors: ValidationError[] = await validate(paymentToBeSaved);
-
-    console.log(await getToken());
-
+    
     if (errors.length > 0) {
       ctx.status = 400;
       ctx.body = errors;
-    } else if (
-      !(await paymentRepository.findOne({
-        cardNumber: paymentToBeSaved.cardNumber,
-      }))
-    ) {
+    } else if (!(await paymentRepository.find({ relations: ["user"] }))) {
       ctx.status = 400;
-      ctx.body = "The specified cardNumber and birth already exsits";
+      ctx.body = "User already has card info data";
     } else {
       const payment = await paymentRepository.save(paymentToBeSaved);
 

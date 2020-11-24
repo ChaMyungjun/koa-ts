@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { getManager, Repository, Not, Equal, Like } from "typeorm";
+import { getManager, Repository } from "typeorm";
 import { validate, ValidationError } from "class-validator";
 
-import { Token, tokenSchema, encoded, reencoded } from "../entity/token";
+import { Token, encoded, reencoded } from "../entity/token";
 
 //get Token => encoded function
 export async function KakaogetToken(

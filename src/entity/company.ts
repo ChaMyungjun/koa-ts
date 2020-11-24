@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Entity,
@@ -5,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
   BaseEntity,
   OneToOne,
+  JoinColumn,
 } from "typeorm";
 import { Length, IsEmail } from "class-validator";
 import { User } from "./user";
@@ -56,8 +58,9 @@ export class Company extends BaseEntity {
   @Length(30, 80)
   image: string;
 
-  @OneToOne(() => User, (user) => user.email)
-  user: User;
+  @OneToOne((type) => User, (user) => user.email)
+  @JoinColumn()
+  user!: User;
 }
 
 export const Companyschema = {

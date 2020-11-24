@@ -11,6 +11,7 @@ import { Length, IsEmail } from "class-validator";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { Company } from "./company";
+import { Payment } from "./payment";
 
 @Entity()
 export class User extends BaseEntity {
@@ -41,6 +42,10 @@ export class User extends BaseEntity {
   @OneToOne(() => Company)
   @JoinColumn()
   company: Company;
+
+  @OneToOne(() => Payment)
+  @JoinColumn()
+  payment: Payment;
 }
 
 export const userSchema = {
@@ -53,8 +58,8 @@ export const userSchema = {
   },
   password: {
     type: "string",
-    required: true,
-  },
+    required: true,   
+  },                                  
 };
 
 //password hashed before input db

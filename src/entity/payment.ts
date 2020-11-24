@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/camelcase */
 import {
@@ -6,6 +7,7 @@ import {
   PrimaryGeneratedColumn,
   BaseEntity,
   OneToOne,
+  JoinColumn,
 } from "typeorm";
 import axios from "axios";
 
@@ -37,12 +39,13 @@ export class Payment extends BaseEntity {
   customerUid: string;
 
   //One User save One card
-  @OneToOne(() => User, (user) => user.email)
-  user: User;
+  @OneToOne((type) => User, (user) => user.email)
+  @JoinColumn()
+  user!: User;
 }
 
 export const Paymentschema = {
-  id: { type: "string", required: true, example: "1" },
+  id: { type: "number", required: true, example: "1" },
   cardNumber: { type: "string", required: true, example: "12345678901" },
   cardExpire: { type: "string", required: true, example: "1225" },
   birth: { type: "string", required: true, example: "090807" },
@@ -50,6 +53,8 @@ export const Paymentschema = {
   cardPassword2digit: { type: "string", required: true, example: "1200" },
 };
 
+
+//customer uudi generate
 export function uuidv4() {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
     const r = (Math.random() * 16) | 0,
@@ -63,22 +68,19 @@ export async function getToken() {
   const impKey = process.env.iamporter_api_key;
   const imptSecret = process.env.iamporter_api_secret;
 
-  console.log(impKey);
-  console.log(imptSecret);
-
-  //   let tsny = null;
-
   await axios({
-      url: tokenURL,
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      data: {
-          imp
-      }
-    })
+    url: tokenURL,
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    data: {
+      imp_key: impKey,
+      imp_secret: imptSecret,
+    },
+  })
     .then((res) => {
-      console.log(res);
-      return res;
+      console.log(res.data);
+      return(res.data.response.access_token
+        );
     })
     .catch((err) => {
       console.error(err.response.data);
@@ -96,7 +98,7 @@ export async function issueBilling(
   const billingURL = `https://api.iamport.kr/subscribe/customers/${customeruId}`;
   const billing = await axios({
     url: billingURL,
-    method: "post",
+    method: "POST",
     headers: { Authorization: `${accessToken}` },
     data: {
       card_number: cardNumber,
