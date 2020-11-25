@@ -1,23 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { BaseContext } from "koa";
-import {
-  getManager,
-  Repository,
-  Not,
-  Equal,
-  Like,
-  getMongoManager,
-} from "typeorm";
+import { getManager, Repository } from "typeorm";
 import { validate, ValidationError } from "class-validator";
 
-import {
-  Token,
-  tokenSchema,
-  encoded,
-  reencoded,
-  decoded,
-} from "../entity/token";
+import { Token, encoded, reencoded } from "../entity/token";
 
 import { User } from "../entity/user";
 
@@ -31,30 +17,25 @@ export async function NavergetToken(
     const token = encoded(accessToken);
     const retoken = reencoded(refreshToken);
 
-    // const testToken = encoded("asdfasdf");
-    // console.log("test", testToken);
-    // const decodedToken = decoded(testToken);
-    // console.log("test", decodedToken);
-
     const tokenRepsitory: Repository<Token> = getManager().getRepository(Token);
     const userRepository: Repository<User> = getManager().getRepository(User);
 
     const tokenToBeSaved: Token = new Token();
+    const userToBeSaved: User = new User();
+
     tokenToBeSaved.Id = profile.id;
     tokenToBeSaved.token = token;
     tokenToBeSaved.reToken = retoken;
     tokenToBeSaved.tokenProvider = profile.provider;
 
-    console.log(profile._json.email);
-
-    const userToBeSaved: User = new User();
     userToBeSaved.email = profile._json.email;
-    userToBeSaved.password = null;
-    userToBeSaved.name = null;
+    userToBeSaved.token = tokenToBeSaved;
 
     //error checking
-    const errors: ValidationError[] = await validate(tokenToBeSaved);
-    if (errors.length > 0) {
+    const errorsToken: ValidationError[] = await validate(tokenToBeSaved);
+    const errorsUser: ValidationError[] = await validate(userToBeSaved);
+
+    if (errorsToken.length > 0) {
       console.log("Error");
     } else if (await tokenRepsitory.findOne({ Id: tokenToBeSaved.Id })) {
       try {
@@ -69,10 +50,13 @@ export async function NavergetToken(
       } catch (err) {
         console.log("Error!");
       }
+    } else if (errorsUser.length > 0) {
+      console.log("Error!");
+      console.log(errorsUser);
     } else {
       await tokenRepsitory.save(tokenToBeSaved);
       const user = await userRepository.save(userToBeSaved);
-      console.log("USER: ", user);
+      console.log(user);
     }
   }
 }

@@ -270,6 +270,7 @@ export default class UserController {
   @request("post", "/user/logout")
   @summary("Delete user token")
   public static async logoutUser(ctx: BaseContext): Promise<void> {
+    console.log(ctx.status);
     console.log("logout");
 
     //db token delete

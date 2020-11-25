@@ -101,6 +101,12 @@ protectedRouter.get(
 //Payment ROUTES
 protectedRouter.post("/payment/create", payment.createPaymentInfo);
 
+//norml payment
+protectedRouter.post("/payment/normal", payment.normalPayment);
+
+//booked payment
+protectedRouter.post("/payment/bookd", payment.bookedPayment);
+
 // Swagger endpoint
 protectedRouter.swagger({
   title: "node-typescript-koa-rest",

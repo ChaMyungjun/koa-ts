@@ -1,9 +1,9 @@
 import { BaseContext } from "koa";
 import { Equal, getManager, Not, Repository } from "typeorm";
 import { request, summary, responsesAll, tagsAll } from "koa-swagger-decorator";
-import { Company } from "../entity/company";
 import { validate, ValidationError } from "class-validator";
-//import { company } from ".";
+
+import { Company } from "../entity/company";
 
 @responsesAll({
   200: { description: "success" },
@@ -18,28 +18,27 @@ export default class CompanyController {
     const companyRepsitory: Repository<Company> = getManager().getRepository(
       Company
     );
+
     const companyToBeSaved: Company = new Company();
+
     companyToBeSaved.name = ctx.request.body.name;
     companyToBeSaved.email = ctx.request.body.email;
     companyToBeSaved.position = ctx.request.body.position;
     companyToBeSaved.phone = ctx.request.body.phone;
     companyToBeSaved.image = ctx.request.body.image;
 
-    const errors: ValidationError[] = await validate(companyToBeSaved);
+    const errorsCompany: ValidationError[] = await validate(companyToBeSaved);
 
-    if (errors.length > 0) {
+    if (errorsCompany.length > 0) {
       ctx.status = 400;
-      ctx.body = errors;
+      ctx.body = errorsCompany;
       //comapny db in user.email checking
     } else if (await companyRepsitory.find({ relations: ["user"] })) {
       ctx.status = 400;
       ctx.body = "Cannot find user";
     } else {
-      const company = await companyRepsitory.save(companyToBeSaved);
-      console.log(company);
-
+      await companyRepsitory.save(companyToBeSaved);
       ctx.status = 201;
-      ctx.body = company;
     }
   }
 

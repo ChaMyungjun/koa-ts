@@ -20,24 +20,25 @@ export async function KakaogetToken(
     const tokenRepsitory: Repository<Token> = getManager().getRepository(Token);
     const userRepsitory: Repository<User> = getManager().getRepository(User);
 
-    console.log(profile);
-    console.log("Email", profile._json.kakao_account.email);
-
     const tokenToBeSaved: Token = new Token();
+    const userToBeSaved: User = new User();
+
     tokenToBeSaved.Id = profile._json.id;
     tokenToBeSaved.token = token;
     tokenToBeSaved.reToken = retoken;
     tokenToBeSaved.tokenProvider = profile.provider;
 
-    const userToBeSaved: User = new User();
     userToBeSaved.email = profile._json.kakao_account.email;
+    userToBeSaved.token = tokenToBeSaved;
 
     //error checking
-    const errors: ValidationError[] = await validate(tokenToBeSaved);
+    const errorsToken: ValidationError[] = await validate(tokenToBeSaved);
+    const errorsUser: ValidationError[] = await validate(userToBeSaved);
 
-    if (errors.length > 0) {
-      console.error(errors);
+    if (errorsToken.length > 0) {
+      console.error(errorsToken);
     } else if (await tokenRepsitory.findOne({ Id: tokenToBeSaved.Id })) {
+      console.log("findone");
       try {
         const tokenToRemove: Token | undefined = await tokenRepsitory.findOne({
           Id: profile._json.id,
@@ -50,12 +51,22 @@ export async function KakaogetToken(
       } catch (err) {
         console.error("Error!");
       }
+    } else if (errorsUser.length > 0) {
+      console.log("user");
+      console.log(errorsUser);
     } else {
       await tokenRepsitory.save(tokenToBeSaved);
-      const user = await userRepsitory.save(userToBeSaved);
-
-      console.log("User", user);
     }
+
+    //user save email & all token info
+    await userRepsitory
+      .save(userToBeSaved)
+      .then((res) => {
+        console.log(res);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   }
 }
 

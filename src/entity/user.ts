@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Entity,
@@ -14,7 +15,6 @@ import jwt from "jsonwebtoken";
 import { Company } from "./company";
 import { Payment } from "./payment";
 import { Token } from "./token";
-import { flat } from "admin-bro";
 
 @Entity()
 export class User extends BaseEntity {
@@ -25,7 +25,6 @@ export class User extends BaseEntity {
   @Column({
     nullable: true,
   })
-  @Length(3, 80)
   name: string;
 
   //email
@@ -39,18 +38,17 @@ export class User extends BaseEntity {
   @Column({
     nullable: true,
   })
-  @Length(6, 100)
   password: string;
 
-  @OneToOne(() => Company, (company) => company.user)
+  @OneToOne(() => Company, (company) => company.index)
   @JoinColumn()
-  company: Company;
+  company: Company[];
 
-  @OneToOne(() => Payment, (payment) => payment.user)
+  @OneToOne(() => Payment, (payment) => payment.index)
   @JoinColumn()
-  payment: Payment;
+  payment: Payment[];
 
-  @OneToOne(() => Token, (token) => token.user)
+  @OneToOne((type) => Token)
   @JoinColumn()
   token: Token;
 }

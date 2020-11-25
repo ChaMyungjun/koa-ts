@@ -1,20 +1,30 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { BaseContext } from "koa";
 import { request, responsesAll, summary } from "koa-swagger-decorator";
+import { getManager, Repository, Equal, Not } from "typeorm";
+import { IsEmail, validate, ValidationError } from "class-validator";
 
-import { IamportPayment } from "../lib/payment";
+import { User } from "../entity/user";
 
-import { Payment, uuidv4, getToken, issueBilling } from "../entity/payment";
-import { getManager, Repository } from "typeorm";
-import { validate, ValidationError } from "class-validator";
+import {
+  Payment,
+  uuidv4,
+  getToken,
+  issueBilling,
+  normalPayment,
+  bookedPayment,
+} from "../entity/payment";
+import { ConsoleTransportOptions } from "winston/lib/winston/transports";
 
 @responsesAll(["Payment"])
 export default class PaymentController {
   @request("post", "/payment/pay")
   @summary("payment User Product")
   public static async createOrder(ctx: BaseContext): Promise<void> {
-    const UserPayment = IamportPayment();
-    console.log(UserPayment);
+    // const UserPayment = IamportPayment();
+    // console.log(UserPayment);
+    console.log("Payment");
   }
 
   @request("post", "/payment/create")
@@ -24,6 +34,7 @@ export default class PaymentController {
     const paymentRepository: Repository<Payment> = getManager().getRepository(
       Payment
     );
+    const userRepository: Repository<User> = getManager().getRepository(User);
 
     //craete random customer uuid
     const uuid = uuidv4();
@@ -31,17 +42,19 @@ export default class PaymentController {
     //create entity
     //build up entity payment info to be saved
     const paymentToBeSaved: Payment = new Payment();
-
+    const userToBeSaved: User = new User();
     //v alidate payment entity
-    const errors: ValidationError[] = await validate(paymentToBeSaved);
+    const errorsPayment: ValidationError[] = await validate(paymentToBeSaved);
+    const errorsUser: ValidationError[] = await validate(userToBeSaved);
 
     paymentToBeSaved.cardNumber = ctx.request.body.cardNumber;
     paymentToBeSaved.cardExpire = ctx.request.body.cardExpire;
     paymentToBeSaved.birth = ctx.request.body.birth;
     paymentToBeSaved.cardPassword2digit = ctx.request.body.cardPassword2digit;
     paymentToBeSaved.customerUid = uuid;
+    paymentToBeSaved.user = userToBeSaved;
 
-    //showing biling key
+    //generate billing key
     console.log(
       await issueBilling(
         paymentToBeSaved.customerUid,
@@ -53,11 +66,15 @@ export default class PaymentController {
       )
     );
 
-    console.log("UserIndex:",paymentToBeSaved.user);
+    console.log(
+      await (await userRepository.find()).map((cur, index) => {
+        console.log(cur.token);
+      })
+    );
 
-    if (errors.length > 0) {  
+    if (errorsPayment.length > 0) {
       ctx.status = 400;
-      ctx.body = errors;
+      ctx.body = errorsPayment;
     } else if (!(await paymentRepository.find({ relations: ["user"] }))) {
       ctx.status = 400;
       ctx.body = "User doesn't exists";
@@ -73,13 +90,66 @@ export default class PaymentController {
     ) {
       ctx.status = 400;
       ctx.body = "Brith already exists";
+    } else if (errorsUser.length > 0) {
+      ctx.status = 400;
+      ctx.body = errorsUser;
     } else {
-      const payment = await paymentRepository.save(paymentToBeSaved);
+      await paymentRepository.save(paymentToBeSaved);
+      const user = await userRepository.save(userToBeSaved);
       ctx.status = 201;
-      ctx.body = payment;
+
+      console.log(user);
     }
   }
-  public static async billingPayment(ctx:BaseContext): Promise<void> {
-    const billingPaymentRepository: Repository<Payment> = getManager().getRepository(Payment);
+
+  @request("post", "/payment/normalpayment")
+  @summary("normal payment")
+  public static async normalPayment(ctx: BaseContext): Promise<void> {
+    const normalPaymentRepository: Repository<Payment> = getManager().getRepository(
+      Payment
+    );
+
+    let userCustomerUid: any = null;
+
+    const normalPayments: Payment[] = await normalPaymentRepository.find();
+
+    normalPayments.map((cur, index) => {
+      userCustomerUid = cur.customerUid;
+    });
+
+    console.log(
+      await normalPayment(
+        await getToken(),
+        userCustomerUid,
+        "order_monthly_0001",
+        200,
+        "일반결제 테스트"
+      )
+    );
+  }
+
+  @request("post", "/payment/booked")
+  @summary("booked payment")
+  public static async bookedPayment(ctx: BaseContext): Promise<void> {
+    const bookedPaymentRepository: Repository<Payment> = getManager().getRepository(
+      Payment
+    );
+
+    let userCustomerUid: any = null;
+
+    const bookedPayments: Payment[] = await bookedPaymentRepository.find();
+
+    bookedPayments.map((cur, index) => {
+      userCustomerUid = cur.customerUid;
+    });
+
+    // console.log(
+    //   await bookedPayment(
+    //     userCustomerUid,
+    //     "order_monthly_0001",
+    //     200,
+    //     "월간 이용권 정기 결제 테스팅"
+    //   )
+    // );
   }
 }

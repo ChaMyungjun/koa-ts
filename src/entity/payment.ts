@@ -38,7 +38,7 @@ export class Payment extends BaseEntity {
   @Column()
   customerUid: string;
 
-  //One User save One card
+  // One User save One card
   @OneToOne((type) => User, (user) => user.payment)
   @JoinColumn()
   user: User;
@@ -79,7 +79,6 @@ export async function getToken() {
     },
   })
     .then((res) => {
-      console.log(res.data);
       token = res.data.response.access_token;
     })
     .catch((err) => {
@@ -110,13 +109,9 @@ export async function issueBilling(
       amount: 200,
       name: "월간 이용권 결제",
     },
-  })
-    .then((res) => {
-      console.log(res.data);
-    })
-    .catch((err) => {
-      console.log(err.response.data);
-    });
+  }).then((res) => {
+    console.log(res.data);
+  });
 
   await axios({
     url: billingURL,
@@ -133,7 +128,7 @@ export async function issueBilling(
       console.log(res.data);
     })
     .catch((err) => {
-      console.error(err.response.data);
+      console.error(err.data);
     });
 }
 
@@ -151,16 +146,52 @@ export async function normalPayment(
     method: "POST",
     headers: { Authorization: accessToken },
     data: {
-      customerUid,
-      merchantUid,
+      customer_uid: customerUid,
+      merchant_uid: merchantUid,
       amount,
       name,
     },
   })
     .then((res) => {
-      console.log(res);
+      console.log(res.data);
     })
     .catch((err) => {
-      console.log(err);
+      console.error(err);
+    });
+}
+
+export async function bookedPayment(
+  customerUid: any,
+  merchantUid: any,
+  amount: any,
+  Name: any,
+  buyerEmail: any
+) {
+  const date = new Date();
+  date.setMonth(date.getMonth() + 2);
+  const timeStamp = Math.floor(date.getTime() / 1000);
+  const bookedURL = "https://api.iamport.kr/subscribe/payments/schedule";
+  await axios({
+    url: bookedURL,
+    method: "post",
+    headers: { Authorization: await getToken() },
+    data: {
+      customer_uid: customerUid,
+      schedules: [
+        {
+          merchant_uid: merchantUid,
+          schedule_at: timeStamp,
+          amount: amount,
+          name: Name,
+          buyer_email: buyerEmail,
+        },
+      ],
+    },
+  })
+    .then((res) => {
+      console.log(res.data);
+    })
+    .catch((err) => {
+      console.error(err);
     });
 }

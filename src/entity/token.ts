@@ -8,7 +8,6 @@ import {
   OneToOne,
   JoinColumn,
 } from "typeorm";
-import { Length } from "class-validator";
 import jwt from "jsonwebtoken";
 import { User } from "./user";
 
@@ -19,10 +18,7 @@ export class Token extends BaseEntity {
   index: number;
 
   //token_site
-  @Column({
-    length: 20,
-  })
-  @Length(5, 10)
+  @Column()
   tokenProvider: string;
 
   //social ID number => member ID
@@ -30,32 +26,22 @@ export class Token extends BaseEntity {
   Id: number;
 
   //access_token
-  @Column({
-    nullable: false,
-  })
-  @Length(0, 400)
+  @Column()
   token: string;
 
   //refresh_token
-  @Column({
-    nullable: false,
-  })
-  @Length(0, 400)
+  @Column()
   reToken: string;
-
-  @OneToOne((type) => User, (user) => user.token)
-  @JoinColumn()
-  user: User;
 }
 
 //token schema
-export const tokenSchema = {
-  index: { type: "number", required: true, example: 1 },
-  tokenProvider: { type: "string", required: true, example: "kakao" },
-  Id: { type: "number", required: true, example: 1234124 },
-  token: { type: "string", required: true, exmpale: "asdfasdfasdfasdfasdf" },
-  retoken: { type: "string", example: "asdfsdafsdfasdfasdfasdfasd" },
-};
+// export const tokenSchema = {
+//   index: { type: "number", required: true, example: 1 },
+//   tokenProvider: { type: "string", required: true, example: "kakao" },
+//   Id: { type: "number", required: true, example: 1234124 },
+//   token: { type: "string", required: true, exmpale: "asdfasdfasdfasdfasdf" },
+//   retoken: { type: "string", example: "asdfsdafsdfasdfasdfasdfasd" },
+// };
 
 //token encoded => converting
 export function encoded(access: any) {
