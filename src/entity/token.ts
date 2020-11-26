@@ -32,6 +32,10 @@ export class Token extends BaseEntity {
   //refresh_token
   @Column()
   reToken: string;
+
+  // @OneToOne((type) => User)
+  // @JoinColumn()
+  // user: User;
 }
 
 //token schema

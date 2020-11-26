@@ -142,7 +142,7 @@ try {
       app.use(bodyParser());
 
       //jwtMiddle using => social login accessToken valid checking
-      app.use(jwtMiddleware);
+      //app.use(jwtMiddleware);
 
       // these routes are NOT protected by the JWT middleware, also include middleware to respond with "Method Not Allowed - 405".
       app

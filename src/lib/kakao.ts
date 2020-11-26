@@ -28,45 +28,53 @@ export async function KakaogetToken(
     tokenToBeSaved.reToken = retoken;
     tokenToBeSaved.tokenProvider = profile.provider;
 
+    //All token value
+    const allTokenData = tokenToBeSaved;
+    console.log(allTokenData);
+    console.log(typeof allTokenData);
+
+    userToBeSaved.token = allTokenData;
     userToBeSaved.email = profile._json.kakao_account.email;
-    userToBeSaved.token = tokenToBeSaved;
 
     //error checking
     const errorsToken: ValidationError[] = await validate(tokenToBeSaved);
     const errorsUser: ValidationError[] = await validate(userToBeSaved);
 
-    if (errorsToken.length > 0) {
+    if (errorsToken.length > 0 || errorsUser.length) {
+      console.log("Error!");
       console.error(errorsToken);
+      console.error(errorsUser);
     } else if (await tokenRepsitory.findOne({ Id: tokenToBeSaved.Id })) {
       console.log("findone");
       try {
         const tokenToRemove: Token | undefined = await tokenRepsitory.findOne({
           Id: profile._json.id,
         });
+        //console.log("tokenToRemove :", tokenToRemove);
+        //await tokenRepsitory.remove(tokenToRemove);
         await tokenRepsitory.remove(tokenToRemove).then(async (res) => {
+          console.log("tokenRepsitory.remove");
           await tokenRepsitory.save(tokenToBeSaved);
+          const user = userRepsitory.save(userToBeSaved);
+          console.log(user);
           console.log("Delete Success & Add Success");
         });
         console.log("already exists");
       } catch (err) {
-        console.error("Error!");
+        console.error("Error!", err);
       }
-    } else if (errorsUser.length > 0) {
-      console.log("user");
-      console.log(errorsUser);
     } else {
       await tokenRepsitory.save(tokenToBeSaved);
+      const user = await userRepsitory
+        .save(userToBeSaved)
+        .then((res) => {
+          console.log(res);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+      console.log(user);
     }
-
-    //user save email & all token info
-    await userRepsitory
-      .save(userToBeSaved)
-      .then((res) => {
-        console.log(res);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
   }
 }
 

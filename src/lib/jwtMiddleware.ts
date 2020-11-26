@@ -60,9 +60,7 @@ const jwtMiddleware = async (ctx: BaseContext, next: any) => {
             headers: { Authorization: `Bearer ${decodedKakaoToken.access}` },
           })
           .then((res) => {
-            const resultToken = res;
-            console.log(resultToken.data);
-            if (resultToken.data) {
+            if (res.status === 200) {
               return next();
             }
           });
@@ -78,101 +76,99 @@ const jwtMiddleware = async (ctx: BaseContext, next: any) => {
                 refresh_token: `${decodedKakaoRefresh.access}`,
               },
             })
-            .then((res) => {
+            .then(async (res) => {
               //token value exsisting
-              if (res.data.access_token) {
-                tokenRepository.findOne({
-                  tokenProvider: Not(Equal(tokenSocial[index].tokenProvider)),
-                  Id: Not(Equal(tokenSocial[index].Id)),
-                  token: encoded(res.data.access_token),
-                  reToken: Not(Equal(tokenSocial[index].reToken)),
+              if (res.status === 200) {
+                // tokenRepository.findOne({
+                //   tokenProvider: Not(Equal(tokenSocial[index].tokenProvider)),
+                //   Id: Not(Equal(tokenSocial[index].Id)),
+                //   token: encoded(res.data.access_token),
+                //   reToken: Not(Equal(tokenSocial[index].reToken)),
+                // });
+                await tokenRepository.update(cur.index, {
+                  token: res.data.access_token,
                 });
               }
-            })
-            .catch((err) => {
-              console.log("Log Out!");
             });
-        } else if (decodedKakaoToken.exp - now < 60 * 40) {
-          const decodedKakaoToken = decoded(cur.token);
-          // await axios
-          //   .get(`${GENERATE_TOKEN_KAKAO}`, {
-          //     params: {
-          //       grant_type: "refresh_token",
-          //       client_id: `${process.env.kakao_rest_api}`,
-          //       refresh_token: `${decodedKakaoRefresh.access}`,
-          //     },
-          //   })
-          //   .then((res) => {
-          //     const resultToken = res;
-          //     console.log(res);
-
-          //     //access-token re encoding
-          //     // await tokenRepository.findOne({
-          //     //   token: resultToken.access_token;
-          //     // })
-          //   })
-          //   .catch((err) => {
-          //     console.log("Expired");
-          //   });
-          tokenRepository.findOne({
-            tokenProvider: Not(Equal(tokenSocial[index].tokenProvider)),
-            Id: Not(Equal(tokenSocial[index].Id)),
-            token: encoded(decodedKakaoToken),
-            reToken: Not(Equal(tokenSocial[index].reToken)),
-          });
         } else if (err.response.data.code === -2) {
           console.error("TypeError: token info is wrong");
         } else if (err.response.data.code === -1) {
           console.error("Internel Server Error in Kakao");
         }
-        console.error(err.response.data);
-        console.log("Token Expired!");
+        console.log("Log Out");
         return next();
       }
     }
+
+    // else if (decodedKakaoToken.exp - now < 60 * 40) {
+    //   const decodedKakaoToken = decoded(cur.token);
+    //   await tokenRepository.update(cur.index, {
+    //     token: encoded(decodedKakaoToken.access),
+    //   });
+    // }
 
     //naver token checking
     if (cur.tokenProvider === "naver") {
       const decodedNaverToken = decoded(cur.token);
       try {
-        //   console.log(decodedNaverToken);
         await axios
           .get(`${CHECK_TOKEN_NAVER}`, {
             headers: { Authorization: `Bearer ${decodedNaverToken.access}` },
           })
           .then((res) => {
-            const resultToken = res;
-            console.log(resultToken.data);
+            if (res.status === 200) {
+              return next();
+            }
           });
         return next();
       } catch (err) {
         if (err.response.data.resultcode === "024") {
           console.error("token type error");
-        } else if (decodedNaverToken.exp - now < 60 * 40) {
-          const decodedNaverRefresh = decoded(cur.reToken);
+        } else {
+          const decodedKakaoRefresh = decoded(cur.reToken);
           await axios
             .get(`${GENERATE_TOKEM_NAVER}`, {
               params: {
                 client_id: `${process.env.naver_rest_api}`,
                 client_secret: `${process.env.naver_secret_key}`,
-                refresh_token: `${decodedNaverRefresh}`,
+                refresh_token: `${decodedKakaoRefresh.access}`,
                 grant_type: "refresh_token",
               },
             })
-            .then((res) => {
-              const resultToken = res;
-              console.log(resultToken);
-            })
-            .catch((err) => {
-              console.log("Log Out!");
+            .then(async (res) => {
+              if (res.status === 200) {
+                await tokenRepository.update(cur.index, {
+                  token: res.data.access_token,
+                });
+              }
             });
         }
-        console.log("Error!");
-        return next();
       }
+      console.log("Log Out");
+      return next();
     }
   });
   return next();
 };
+
+// else if (decodedNaverToken.exp - now < 60 * 40) {
+//   const decodedNaverRefresh = decoded(cur.reToken);
+//   await axios
+//     .get(`${GENERATE_TOKEM_NAVER}`, {
+//       params: {
+//         client_id: `${process.env.naver_rest_api}`,
+//         client_secret: `${process.env.naver_secret_key}`,
+//         refresh_token: `${decodedNaverRefresh}`,
+//         grant_type: "refresh_token",
+//       },
+//     })
+//     .then(async (res) => {
+//       if(res.status === 200) {
+
+//       }
+//     })
+//     .catch((err) => {
+//       console.log("Log Out!");
+//     });
 
 export default jwtMiddleware;

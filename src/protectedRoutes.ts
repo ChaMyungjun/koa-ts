@@ -1,14 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { SwaggerRouter } from "koa-swagger-decorator";
-import passport from "koa-passport";
-import { user, company, payment } from "./controller";
-
-import { KakaogetToken } from "./lib/kakao";
-import { NavergetToken } from "./lib/naver";
+import { user, company, payment, token } from "./controller";
 
 const protectedRouter = new SwaggerRouter();
-const kakaoStrategy = require("./social/kakao.index").KakaoStrategy;
-const naverStrategy = require("./social/naver.index").NaverStrategy;
 
 // USER ROUTES
 protectedRouter.get("/users", user.getUsers); //All Member find
@@ -22,81 +16,16 @@ protectedRouter.post("/user/logout", user.logoutUser); //user logout
 // delete token in db
 protectedRouter.post("/user/logout", user.logoutUser);
 
-//kakao URL, API Key, code value
-const kakaoKey = {
-  clientID: process.env.kakao_rest_api,
-  clientSecret: process.env.kakao_secret_key,
-  callbackURL: process.env.kakao_redirect_url,
-};
+// getting token
+protectedRouter.post("/convert/token", token.getSocialToken);
 
-//naver URL, API Key, code value
-const naverKey = {
-  clientID: process.env.naver_rest_api,
-  clientSecret: process.env.naver_secret_key,
-  callbackURL: process.env.naver_redirect_url,
-};
-
-//generate Strategy => call kakao api(login)
-passport.use(
-  "kakao-login",
-  new kakaoStrategy(
-    kakaoKey,
-    (accessToken: any, refreshToken: any, profile: any) => {
-      console.log("kakao");
-      console.log(profile);
-      if (accessToken) {
-        KakaogetToken(accessToken, refreshToken, profile);
-        console.log("Success");
-      }
-    }
-  )
-);
-
-//generate Strategy => call naver api(login)
-passport.use(
-  "naver-login",
-  new naverStrategy(
-    naverKey,
-    (accessToken: any, refreshToken: any, profile: any) => {
-      console.log("naver");
-      //USER.info is profile
-      if (accessToken) {
-        console.log(profile);
-        NavergetToken(accessToken, refreshToken, profile);
-      }
-    }
-  )
-);
-
-//kakao Routes
-protectedRouter.get("/kakao/login", passport.authenticate("kakao-login"));
-
-//naver Routes
-protectedRouter.get("/naver/login", passport.authenticate("naver-login"));
+// protectedRouter.get("/convert/token", token.getSocialToken);
 
 //company data getting
 protectedRouter.post("/company/register", company.createCompany);
 
 //comapany data modify
 protectedRouter.patch("/company/modify", company.modifyCompany);
-
-//kakao redirect
-protectedRouter.get(
-  "/user/kakao/auth",
-  passport.authenticate("kakao-login", {
-    successRedirect: "/",
-    failureRedirect: "/",
-  })
-);
-
-//naver redirect
-protectedRouter.get(
-  "/user/naver/auth",
-  passport.authenticate("naver-login", {
-    successRedirect: "/",
-    failureRedirect: "/test",
-  })
-);
 
 //Payment ROUTES
 protectedRouter.post("/payment/create", payment.createPaymentInfo);

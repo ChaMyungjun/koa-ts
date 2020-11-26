@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { BaseContext } from "koa";
 import { request, responsesAll, summary } from "koa-swagger-decorator";
-import { getManager, Repository, Equal, Not } from "typeorm";
+import { getManager, Repository, Equal, Not, createConnection } from "typeorm";
 import { IsEmail, validate, ValidationError } from "class-validator";
 
 import { User } from "../entity/user";
@@ -16,6 +16,7 @@ import {
   bookedPayment,
 } from "../entity/payment";
 import { ConsoleTransportOptions } from "winston/lib/winston/transports";
+import { decoded } from "../entity/token";
 
 @responsesAll(["Payment"])
 export default class PaymentController {
@@ -31,10 +32,15 @@ export default class PaymentController {
   @summary("create payment info")
   public static async createPaymentInfo(ctx: BaseContext): Promise<void> {
     //get a payment to perform operations with paymenrt
-    const paymentRepository: Repository<Payment> = getManager().getRepository(
+    const paymentRepository: Repository<Payment> = await getManager().getRepository(
       Payment
     );
-    const userRepository: Repository<User> = getManager().getRepository(User);
+    const userRepository: Repository<User> = await getManager().getRepository(
+      User
+    );
+
+    const headers = ctx.response.header;
+    decoded(headers);
 
     //craete random customer uuid
     const uuid = uuidv4();
@@ -54,28 +60,39 @@ export default class PaymentController {
     paymentToBeSaved.customerUid = uuid;
     paymentToBeSaved.user = userToBeSaved;
 
-    //generate billing key
-    console.log(
-      await issueBilling(
-        paymentToBeSaved.customerUid,
-        await getToken(),
-        paymentToBeSaved.cardNumber,
-        paymentToBeSaved.cardExpire,
-        paymentToBeSaved.birth,
-        paymentToBeSaved.cardPassword2digit
-      )
-    );
+    userToBeSaved.payment = paymentToBeSaved;
 
+    // generate billing key
+    // console.log(
+    //   await issueBilling(
+    //     paymentToBeSaved.customerUid,
+    //     await getToken(),
+    //     paymentToBeSaved.cardNumber,
+    //     paymentToBeSaved.cardExpire,
+    //     paymentToBeSaved.birth,
+    //     paymentToBeSaved.cardPassword2digit
+    //   )
+    // );
+
+    // cehcking user token
     console.log(
       await (await userRepository.find()).map((cur, index) => {
-        console.log(cur.token);
+        console.log(cur, "asdfasdfasdf");
       })
     );
+
+    //checking user relations with payment
+    const userRelation = await paymentRepository.find({ relations: ["user"] });
+    const paymentRelation = await userRepository.find({
+      relations: ["payment"],
+    });
+    console.log(userRelation);
+    console.log(paymentRelation);
 
     if (errorsPayment.length > 0) {
       ctx.status = 400;
       ctx.body = errorsPayment;
-    } else if (!(await paymentRepository.find({ relations: ["user"] }))) {
+    } else if (!(userRelation[0].user.index === paymentRelation[0].index)) {
       ctx.status = 400;
       ctx.body = "User doesn't exists";
     } else if (
@@ -96,9 +113,8 @@ export default class PaymentController {
     } else {
       await paymentRepository.save(paymentToBeSaved);
       const user = await userRepository.save(userToBeSaved);
-      ctx.status = 201;
-
       console.log(user);
+      ctx.status = 201;
     }
   }
 

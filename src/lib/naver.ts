@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { getManager, Repository } from "typeorm";
+import { AdvancedConsoleLogger, getManager, Repository } from "typeorm";
 import { validate, ValidationError } from "class-validator";
 
 import { Token, encoded, reencoded } from "../entity/token";
 
 import { User } from "../entity/user";
+import { nextTick } from "process";
 
 export async function NavergetToken(
   accessToken: any,
@@ -28,14 +29,17 @@ export async function NavergetToken(
     tokenToBeSaved.reToken = retoken;
     tokenToBeSaved.tokenProvider = profile.provider;
 
+    const allTokenData = tokenToBeSaved;
+    console.log(allTokenData);
+
     userToBeSaved.email = profile._json.email;
-    userToBeSaved.token = tokenToBeSaved;
+    userToBeSaved.token = allTokenData;
 
     //error checking
     const errorsToken: ValidationError[] = await validate(tokenToBeSaved);
     const errorsUser: ValidationError[] = await validate(userToBeSaved);
 
-    if (errorsToken.length > 0) {
+    if (errorsToken.length > 0 || errorsUser.length > 0) {
       console.log("Error");
     } else if (await tokenRepsitory.findOne({ Id: tokenToBeSaved.Id })) {
       try {
@@ -44,19 +48,17 @@ export async function NavergetToken(
         });
         await tokenRepsitory.remove(tokenToRemove).then(async (res) => {
           await tokenRepsitory.save(tokenToBeSaved);
-          console.log("Delete Success & Add Success");
+          const user = await userRepository.save(userToBeSaved);
+          console.log("user:", user);
         });
-        console.log("already exists");
       } catch (err) {
-        console.log("Error!");
+        console.error("Error!");
       }
-    } else if (errorsUser.length > 0) {
-      console.log("Error!");
-      console.log(errorsUser);
     } else {
-      await tokenRepsitory.save(tokenToBeSaved);
+      const token = await tokenRepsitory.save(tokenToBeSaved);
       const user = await userRepository.save(userToBeSaved);
-      console.log(user);
+      console.log("token:", token);
+      console.log("user:", user);
     }
   }
 }

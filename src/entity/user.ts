@@ -28,10 +28,7 @@ export class User extends BaseEntity {
   name: string;
 
   //email
-  @Column({
-    length: 100,
-  })
-  @IsEmail()
+  @Column()
   email: string;
 
   //password
@@ -46,9 +43,12 @@ export class User extends BaseEntity {
 
   @OneToOne(() => Payment, (payment) => payment.index)
   @JoinColumn()
-  payment: Payment[];
+  payment: Payment;
 
-  @OneToOne((type) => Token)
+  @OneToOne((type) => Token, (token) => token.index, {
+    nullable: true,
+    onDelete: "SET NULL",
+  })
   @JoinColumn()
   token: Token;
 }
