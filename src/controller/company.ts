@@ -4,6 +4,8 @@ import { request, summary, responsesAll, tagsAll } from "koa-swagger-decorator";
 import { validate, ValidationError } from "class-validator";
 
 import { Company } from "../entity/company";
+import { User } from "../entity/user";
+import { Token } from "../entity/token";
 
 @responsesAll({
   200: { description: "success" },
@@ -18,27 +20,43 @@ export default class CompanyController {
     const companyRepsitory: Repository<Company> = getManager().getRepository(
       Company
     );
+    const userRepository: Repository<User> = getManager().getRepository(User);
+    const tokenRepository: Repository<Token> = getManager().getRepository(
+      Token
+    );
+    const gottenToken = ctx.cookies.get("access_token");
 
-    const companyToBeSaved: Company = new Company();
+    if (
+      await userRepository.findOne({
+        token: await tokenRepository.findOne({ token: gottenToken }),
+      })
+    ) {
+      const companyToBeSaved: Company = new Company();
 
-    companyToBeSaved.name = ctx.request.body.name;
-    companyToBeSaved.email = ctx.request.body.email;
-    companyToBeSaved.position = ctx.request.body.position;
-    companyToBeSaved.phone = ctx.request.body.phone;
-    companyToBeSaved.image = ctx.request.body.image;
+      companyToBeSaved.companyName = ctx.request.companyName;
+      companyToBeSaved.name = ctx.request.body.name;
+      companyToBeSaved.email = ctx.request.body.email;
+      companyToBeSaved.position = ctx.request.body.position;
+      companyToBeSaved.phone = ctx.request.body.phone;
+      companyToBeSaved.image = ctx.request.body.image;
 
-    const errorsCompany: ValidationError[] = await validate(companyToBeSaved);
+      const errorsCompany: ValidationError[] = await validate(companyToBeSaved);
 
-    if (errorsCompany.length > 0) {
-      ctx.status = 400;
-      ctx.body = errorsCompany;
-      //comapny db in user.email checking
-    } else if (await companyRepsitory.find({ relations: ["user"] })) {
-      ctx.status = 400;
-      ctx.body = "Cannot find user";
-    } else {
-      await companyRepsitory.save(companyToBeSaved);
-      ctx.status = 201;
+      if (errorsCompany.length > 0) {
+        ctx.status = 400;
+        ctx.body = errorsCompany;
+        //comapny db in user.email checking
+      } else if (
+        !(await companyRepsitory.findOne({
+          companyName: companyToBeSaved.companyName,
+        }))
+      ) {
+        ctx.status = 400;
+        ctx.body = "CompanyName already exists";
+      } else {
+        await companyRepsitory.save(companyToBeSaved);
+        ctx.status = 201;
+      }
     }
   }
 

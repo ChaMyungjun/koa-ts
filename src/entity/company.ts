@@ -59,7 +59,6 @@ export class Company extends BaseEntity {
   image: string;
 
   @OneToOne((type) => User, (user) => user.company)
-  @JoinColumn()
   user: User;
 }
 

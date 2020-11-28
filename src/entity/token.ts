@@ -33,9 +33,8 @@ export class Token extends BaseEntity {
   @Column()
   reToken: string;
 
-  // @OneToOne((type) => User)
-  // @JoinColumn()
-  // user: User;
+  @OneToOne((type) => User, (user) => user.token)
+   user: User
 }
 
 //token schema
@@ -52,14 +51,12 @@ export function encoded(access: any) {
   const socialToken = jwt.sign({ access }, process.env.SECRET_KEY, {
     expiresIn: "1h",
   });
-  console.log("token value:", socialToken);
   return socialToken;
 }
 
 //refresh token converting (expiresIn none)
 export function reencoded(refresh: any) {
   const socialRefreshToken = jwt.sign({ refresh }, process.env.SECRET_KEY);
-  console.log("refresh token value:", socialRefreshToken);
   return socialRefreshToken;
 }
 
@@ -69,7 +66,6 @@ export function decoded(token: any) {
     if (err) {
       console.error(err);
     }
-    console.log(value);
     decodeToken = value;
   });
   return decodeToken;

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/type-annotation-spacing */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
@@ -37,11 +38,17 @@ export class User extends BaseEntity {
   })
   password: string;
 
-  @OneToOne(() => Company, (company) => company.index)
+  @OneToOne((type) => Company, (company) => company.index, {
+    nullable: true,
+    onDelete: "SET NULL",
+  })
   @JoinColumn()
   company: Company[];
 
-  @OneToOne(() => Payment, (payment) => payment.index)
+  @OneToOne((type) => Payment, (payment) => payment.index, {
+    nullable: true,
+    onDelete: "SET NULL",
+  })
   @JoinColumn()
   payment: Payment;
 
@@ -49,7 +56,7 @@ export class User extends BaseEntity {
     nullable: true,
     onDelete: "SET NULL",
   })
-  @JoinColumn()
+  @JoinColumn({ name: "token_index" })
   token: Token;
 }
 

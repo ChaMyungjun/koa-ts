@@ -8,10 +8,12 @@ import {
   BaseEntity,
   OneToOne,
   JoinColumn,
+  AdvancedConsoleLogger,
 } from "typeorm";
 import axios from "axios";
 
 import { User } from "./user";
+import { ConsoleTransportOptions } from "winston/lib/winston/transports";
 
 @Entity()
 export class Payment extends BaseEntity {
@@ -21,6 +23,12 @@ export class Payment extends BaseEntity {
   //cardnumber
   @Column()
   cardNumber: string;
+
+  //card Type
+  @Column({
+    nullable: true,
+  })
+  cardType: string;
 
   //card expires day
   @Column()
@@ -51,6 +59,7 @@ export const Paymentschema = {
   birth: { type: "string", required: true, example: "090807" },
   customerUid: { type: "string", required: true, example: "gildong_0001_1234" },
   cardPassword2digit: { type: "string", required: true, example: "1200" },
+  cardType: { type: "string", required: true, exmpale: "1" },
 };
 
 //customer uudi generate
@@ -109,27 +118,31 @@ export async function issueBilling(
       amount: 200,
       name: "월간 이용권 결제",
     },
-  }).then((res) => {
-    console.log(res.data);
-  });
-
-  await axios({
-    url: billingURL,
-    method: "POST",
-    headers: { Authorization: `${accessToken}` },
-    data: {
-      card_number: cardNumber,
-      expiry: cardExpire,
-      birth: userBirth,
-      pwd_2digit: password2digit,
-    },
   })
     .then((res) => {
       console.log(res.data);
     })
     .catch((err) => {
-      console.error(err.data);
+      console.error(err.response.data);
     });
+
+  try {
+    const paymentResult = await axios({
+      url: billingURL,
+      method: "POST",
+      headers: { Authorization: `${accessToken}` },
+      data: {
+        card_number: cardNumber,
+        expiry: cardExpire,
+        birth: userBirth,
+        pwd_2digit: password2digit,
+      },
+    }).catch((err) => {
+      console.error(err.response.data);
+    });
+  } catch (err) {
+    console.error("Error: ", err);
+  }
 }
 
 export async function normalPayment(
