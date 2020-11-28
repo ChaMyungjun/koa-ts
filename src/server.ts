@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import Koa from "koa";
 import bodyParser from "koa-bodyparser";
 import helmet from "koa-helmet";
@@ -7,7 +9,7 @@ import passport from "koa-passport";
 import { createConnection } from "typeorm";
 import "reflect-metadata";
 import AdminBro from "admin-bro";
-import { buildRouter } from "@admin-bro/koa";
+import { buildAuthenticatedRouter, buildRouter } from "@admin-bro/koa";
 import { Database, Resource } from "@admin-bro/typeorm";
 import { validate } from "class-validator";
 
@@ -15,6 +17,7 @@ import { User } from "./entity/user";
 import { Token } from "./entity/token";
 import { Company } from "./entity/company";
 import { Payment } from "./entity/payment";
+import { Admin } from "./entity/admin";
 
 import { logger } from "./logger";
 import { config } from "./config";
@@ -25,7 +28,6 @@ import { cron } from "./cron";
 import jwtMiddleware from "./lib/jwtMiddleware";
 
 Resource.validate = validate;
-AdminBro.registerAdapter({ Database, Resource });
 
 // create connection with database
 // note that its not active database connection
@@ -50,84 +52,65 @@ try {
   })
     .then(async (connection) => {
       const app = new Koa();
+      app.keys = ["super-secret1", "super-secret2"];
 
       //appyling connection to model
       User.useConnection(connection);
       Token.useConnection(connection);
 
+      //user modify setting
+      const canModifyUsers = ({ currentAdmin }: any) =>
+        currentAdmin && currentAdmin.role === "admin";
+
+      AdminBro.registerAdapter({ Database, Resource });
       //adminBro create
       const adminBro = new AdminBro({
         resources: [
           {
+            resource: Company,
+          },
+          {
             resource: User,
-            options: {
-              properties: {
-                name: {
-                  isVisible: {
-                    list: true,
-                    filter: true,
-                    show: true,
-                    edit: true,
-                  },
+            actions: {
+              new: {
+                edit: {
+                  isAccessible: canModifyUsers,
                 },
+                delete: { isAccessible: canModifyUsers },
+                new: { isAccessible: canModifyUsers },
               },
             },
           },
           {
             resource: Token,
-            options: {
-              properties: {
-                name: {
-                  isVisible: {
-                    list: true,
-                    filter: true,
-                    show: true,
-                    edit: true,
-                  },
-                },
-              },
-            },
           },
           {
             resource: Payment,
-            options: {
-              properties: {
-                name: {
-                  isVisible: {
-                    list: true,
-                    filter: true,
-                    show: true,
-                    edit: true,
-                  },
-                },
-              },
-            },
-          },
-          {
-            resource: Company,
-            options: {
-              properties: {
-                name: {
-                  isVisible: {
-                    list: true,
-                    filter: true,
-                    show: true,
-                    edit: true,
-                  },
-                },
-              },
-            },
           },
         ],
-        branding: {
-          companyName: "bibli",
-        },
+        rootPath: "/admin",
       });
 
+      // const adminBro = new AdminBro({
+      //   databases: [],
+      //   rootPath: "/admin",
+      // });
+
       //adminbor-koa buildRouter setting
-      const router = buildRouter(adminBro, app);
-      app.use(router.routes());
-      app.use(router.allowedMethods());
+      const router = buildAuthenticatedRouter(adminBro, app, {
+        authenticate: async (email, password) => {
+          const user = await Admin.findOne({ email });
+          if (user) {
+            if (password === user.password) {
+              return user;
+            }
+          }
+          return null;
+        },
+      });
+      // const router = buildRouter(adminBro, app);
+
+      app.use(router.routes()).use(router.allowedMethods());
 
       // Provides important security headers to make your app more secure
       app.use(helmet());
@@ -159,8 +142,8 @@ try {
       // );
 
       //passport initialize setting
-      app.use(passport.initialize());
-      app.use(passport.session());
+      // app.use(passport.initialize());
+      // app.use(passport.session());
 
       // Register cron job to do any action needed
       cron.start();
