@@ -63,15 +63,15 @@ export class Company extends BaseEntity {
 }
 
 export const Companyschema = {
-  // id: { type: "number", required: true, example: 1 },
-  // name: { type: "string", required: true, example: "Javier" },
-  // email: {
-  //   type: "string",
-  //   required: true,
-  //   example: "avileslopez.javier@gmail.com",
-  // },
-  // password: {
-  //   type: "string",
-  //   required: true,
-  // },
+  id: { type: "number", required: true, example: 1 },
+  name: { type: "string", required: true, example: "Javier" },
+  email: {
+    type: "string",
+    required: true,
+    example: "avileslopez.javier@gmail.com",
+  },
+  password: {
+    type: "string",
+    required: true,
+  },
 };
