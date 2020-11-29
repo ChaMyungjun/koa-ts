@@ -25,12 +25,11 @@ export default class CompanyController {
       Token
     );
     const gottenToken = ctx.cookies.get("access_token");
+    const userToBeUpdate = await userRepository.findOne({
+      token: await tokenRepository.findOne({ token: gottenToken }),
+    });
 
-    if (
-      await userRepository.findOne({
-        token: await tokenRepository.findOne({ token: gottenToken }),
-      })
-    ) {
+    if (userToBeUpdate) {
       const companyToBeSaved: Company = new Company();
 
       companyToBeSaved.companyName = ctx.request.companyName;
@@ -40,14 +39,14 @@ export default class CompanyController {
       companyToBeSaved.phone = ctx.request.body.phone;
       companyToBeSaved.image = ctx.request.body.image;
 
-      const errorsCompany: ValidationError[] = await validate(companyToBeSaved);
+      const errors: ValidationError[] = await validate(companyToBeSaved);
 
-      if (errorsCompany.length > 0) {
+      if (errors.length > 0) {
         ctx.status = 400;
-        ctx.body = errorsCompany;
+        ctx.body = errors;
         //comapny db in user.email checking
       } else if (
-        !(await companyRepsitory.findOne({
+        (await companyRepsitory.findOne({
           companyName: companyToBeSaved.companyName,
         }))
       ) {
@@ -55,6 +54,9 @@ export default class CompanyController {
         ctx.body = "CompanyName already exists";
       } else {
         await companyRepsitory.save(companyToBeSaved);
+        await userRepository.update(userToBeUpdate.index, {
+          company: companyToBeSaved,
+        });
         ctx.status = 201;
       }
     }

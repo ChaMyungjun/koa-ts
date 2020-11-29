@@ -140,7 +140,8 @@ export default class PaymentController {
     );
     const userRepository: Repository<User> = getManager().getRepository(User);
 
-    console.log(await userRepository.find({relations: ["payment"]}));
+    //console.log(await userRepository.find({ relations: ["payment"] }));
+    console.log(await userRepository.find({ relations: ["company"] }));
 
     // let userCustomerUid: any = null
 

@@ -48,7 +48,7 @@ export class User extends BaseEntity {
     onDelete: "SET NULL",
   })
   @JoinColumn()
-  company: Company[];
+  company: Company;
 
   @OneToOne((type) => Payment, (payment) => payment.index, {
     nullable: true,

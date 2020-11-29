@@ -18,45 +18,28 @@ export class Company extends BaseEntity {
   index: number;
 
   //Compnayname
-  @Column({
-    length: 80,
-  })
-  @Length(3, 80)
+  @Column({ nullable: true })
   companyName: string;
 
   //name
-  @Column({
-    length: 30,
-  })
-  @Length(3, 20)
+  @Column()
   name: string;
 
   //email
-  @Column({
-    length: 100,
-  })
+  @Column()
   @IsEmail()
   email: string;
 
   //position
-  @Column({
-    length: 100,
-  })
-  @Length(6, 100)
+  @Column()
   position: string;
 
   //phone
-  @Column({
-    length: 30,
-  })
-  @Length(9, 20)
+  @Column()
   phone: string;
 
   //business img
-  @Column({
-    length: 100,
-  })
-  @Length(30, 80)
+  @Column()
   image: string;
 
   //create Date
