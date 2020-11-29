@@ -1,5 +1,5 @@
 import { BaseContext } from "koa";
-import { Equal, getManager, Not, Repository } from "typeorm";
+import { getManager, Repository } from "typeorm";
 import { request, summary, responsesAll, tagsAll } from "koa-swagger-decorator";
 import { validate, ValidationError } from "class-validator";
 
