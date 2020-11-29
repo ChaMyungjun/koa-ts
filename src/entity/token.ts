@@ -7,6 +7,7 @@ import {
   BaseEntity,
   OneToOne,
   JoinColumn,
+  CreateDateColumn,
 } from "typeorm";
 import jwt from "jsonwebtoken";
 import { User } from "./user";
@@ -33,8 +34,12 @@ export class Token extends BaseEntity {
   @Column()
   reToken: string;
 
+  //create Date
+  @CreateDateColumn()
+  createdAt: Date;
+
   @OneToOne((type) => User, (user) => user.token)
-   user: User
+  user: User;
 }
 
 //token schema

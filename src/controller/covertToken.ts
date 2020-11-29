@@ -18,7 +18,7 @@ export default class TokenController {
   @request("post", "/convert/token")
   @summary("getting social token")
   public static async getSocialToken(ctx: BaseContext): Promise<void> {
-    console.log(ctx.request.body);
+    //console.log(ctx.request.body);
     const tokenInfo = ctx.request.body;
     const encodedToken = encoded(tokenInfo.token);
 
@@ -70,10 +70,10 @@ export default class TokenController {
         console.error("Error!", err);
       }
     } else {
-      const token = await tokenRepository.save(tokenToBeSaved);
-      const user = await userRepository.save(userToBeSaved);
-      console.log({ user, token });
-      ctx.response.body = encodedToken;
+      await tokenRepository.save(tokenToBeSaved);
+      await userRepository.save(userToBeSaved);
+      //console.log({ user, token });
+      ctx.cookies.set("access_token", encodedToken);
       ctx.status = 201;
     }
   }

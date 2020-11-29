@@ -7,6 +7,7 @@ import {
   BaseEntity,
   OneToOne,
   JoinColumn,
+  CreateDateColumn,
 } from "typeorm";
 import { Length, IsEmail } from "class-validator";
 import { User } from "./user";
@@ -57,6 +58,10 @@ export class Company extends BaseEntity {
   })
   @Length(30, 80)
   image: string;
+
+  //create Date
+  @CreateDateColumn()
+  createdAt: Date;
 
   @OneToOne((type) => User, (user) => user.company)
   user: User;

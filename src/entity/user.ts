@@ -8,6 +8,7 @@ import {
   BaseEntity,
   OneToOne,
   JoinColumn,
+  CreateDateColumn,
 } from "typeorm";
 import { Length, IsEmail } from "class-validator";
 import crypto from "crypto";
@@ -37,6 +38,10 @@ export class User extends BaseEntity {
     nullable: true,
   })
   password: string;
+
+  //create Date
+  @CreateDateColumn()
+  craetedAt: Date;
 
   @OneToOne((type) => Company, (company) => company.index, {
     nullable: true,

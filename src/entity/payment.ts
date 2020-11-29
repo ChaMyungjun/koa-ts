@@ -9,6 +9,7 @@ import {
   OneToOne,
   JoinColumn,
   AdvancedConsoleLogger,
+  CreateDateColumn,
 } from "typeorm";
 import axios from "axios";
 
@@ -46,10 +47,9 @@ export class Payment extends BaseEntity {
   @Column()
   customerUid: string;
 
-  // One User save One card
-  @OneToOne((type) => User, (user) => user.payment)
-  @JoinColumn()
-  user: User;
+  //create Date
+  @CreateDateColumn()
+  createdAt: Date;
 }
 
 export const Paymentschema = {

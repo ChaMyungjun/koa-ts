@@ -67,10 +67,12 @@ try {
       const adminBro = new AdminBro({
         resources: [
           {
-            resource: Company,
-          },
-          {
             resource: User,
+            options: {
+              parent: {
+                name: "Superintend User",
+              },
+            },
             actions: {
               new: {
                 edit: {
@@ -83,9 +85,27 @@ try {
           },
           {
             resource: Token,
+            options: {
+              parent: {
+                name: "Superitend User Token",
+              },
+            },
           },
           {
             resource: Payment,
+            options: {
+              parent: {
+                name: "Superitend User Payment",
+              },
+            },
+          },
+          {
+            resource: Company,
+            options: {
+              parent: {
+                name: "Superitend Company",
+              },
+            },
           },
         ],
         rootPath: "/admin",

@@ -48,11 +48,11 @@ export default class PaymentController {
       await tokenRepository.findOne({ token: gottenToken })
     );
 
-    if (
-      await userRepository.findOne({
-        token: await tokenRepository.findOne({ token: gottenToken }),
-      })
-    ) {
+    const userToBeUpdate = await userRepository.findOne({
+      token: await tokenRepository.findOne({ token: gottenToken }),
+    });
+
+    if (userToBeUpdate) {
       console.log("pass");
       //craete random customer uuid
       const uuid = uuidv4();
@@ -110,7 +110,12 @@ export default class PaymentController {
         ctx.status = 400;
         ctx.body = "Brith already exist";
       } else {
-        await paymentRepository.save(paymentToBeSaved);
+        const payment = await paymentRepository.save(paymentToBeSaved);
+        const user = await userRepository.update(userToBeUpdate.index, {
+          payment: paymentToBeSaved,
+        });
+        console.log({ payment, user });
+
         ctx.status = 201;
       }
     }
@@ -133,6 +138,9 @@ export default class PaymentController {
     const tokenRepository: Repository<Token> = getManager().getRepository(
       Token
     );
+    const userRepository: Repository<User> = getManager().getRepository(User);
+
+    console.log(await userRepository.find({relations: ["payment"]}));
 
     // let userCustomerUid: any = null
 
