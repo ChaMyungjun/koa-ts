@@ -58,31 +58,33 @@ export default class UserController {
     const userRepository: Repository<User> = getManager().getRepository(User);
 
     //get a token repsitory to perform operations with token
-    // const tokenRepository: Repository<Token> = getManager().getRepository(
-    //   Token
-    // );
+    const tokenRepository: Repository<Token> = getManager().getRepository(
+      Token
+    );
 
+    //first checking email and then password checking
+    // load user by email
     //email value checking
     const name = ctx.request.body.name;
     const password = ctx.request.body.password;
 
-    //first checking email and then password checking
-    // load user by email
     const user: User | undefined = await userRepository.findOne({
       email: name,
     });
 
-    const tokenToBeSaved: Token = new Token();
-
-    //Generate token
-    const EncodedToken = encoded(
-      generateToken(user.name, user.email, user.password)
-    );
-
-    const refreshToken = generateRefresh(user.name, user.email);
-
-    //email checking
     if (user) {
+      const tokenToBeSaved: Token = new Token();
+
+      //Generate token
+      const EncodedToken = encoded(
+        generateToken(user.name, user.email, user.password)
+      );
+
+      const refreshToken = generateRefresh(user.name, user.email);
+
+      const errors: ValidationError[] = await validate(tokenToBeSaved);
+
+      //email checking
       //password hashed checking
       if (comparePassword(user.password, password)) {
         // return OK status code and loaded user object
@@ -93,6 +95,13 @@ export default class UserController {
         tokenToBeSaved.tokenProvider = "local";
         ctx.status = 200;
         ctx.body = user;
+
+        if (errors.length > 0) {
+          ctx.status = 400;
+        } else {
+          await tokenRepository.save(tokenToBeSaved);
+          await userRepository.update(user.index, { token: tokenToBeSaved });
+        }
       }
     } else {
       // return a Forbbin status code and error message
@@ -115,8 +124,7 @@ export default class UserController {
     const userToBeSaved: User = new User();
     userToBeSaved.name = ctx.request.body.name;
     userToBeSaved.email = ctx.request.body.email;
-    userToBeSaved.password = hashedPassword(ctx.request.body.password);
-
+    userToBeSaved.password = await hashedPassword(ctx.request.body.password);
     // validate user entity
     const errors: ValidationError[] = await validate(userToBeSaved); // errors is an array of validation errors
 
@@ -174,48 +182,58 @@ export default class UserController {
   public static async updateUser(ctx: BaseContext): Promise<void> {
     // get a user repository to perform operations with user
     const userRepository: Repository<User> = getManager().getRepository(User);
+    const tokenRepository: Repository<Token> = getManager().getRepository(
+      Token
+    );
     //const companyRepositoyry: Repository<Company> = getManager().getRepository(Company);
+    const gottenToken = ctx.cookies.get("access_token");
+    const userToBeUpdate = await userRepository.findOne({
+      token: await tokenRepository.findOne({ token: gottenToken }),
+    });
+    if (userToBeUpdate) {
+      await userRepository.update(userToBeUpdate.index, {
+        email: ctx.request.body.email,
+        password: await hashedPassword(ctx.request.body.password),
+      });
+
+      ctx.body = "Modify Success";
+      ctx.redirect("/");
+      ctx.status = 201;
+    } else {
+      ctx.status = 403;
+      ctx.body = "AccessDenied";
+    }
 
     // update the user by specified id
     // build up entity user to be updated
-    const userToBeUpdated: User = new User();
-    userToBeUpdated.index = +ctx.params.index || 0; // will always have a number, this will avoid errors
-    userToBeUpdated.email = ctx.request.body.email;
-    userToBeUpdated.password = hashedPassword(ctx.request.body.password);
+    // const userToBeUpdated: User = new User();
+    // userToBeUpdated.index = +ctx.params.index || 0; // will always have a number, this will avoid errors
+    // userToBeUpdated.email = ctx.request.body.email;
+    // userToBeUpdated.password = await hashedPassword(ctx.request.body.password);
 
     // validate user entity
-    const errors: ValidationError[] = await validate(userToBeUpdated); // errors is an array of validation errors
+    // const errors: ValidationError[] = await validate(userToBeUpdated); // errors is an array of validation errors
 
-    if (errors.length > 0) {
-      // return BAD REQUEST status code and errors array
-      ctx.status = 400;
-      ctx.body = errors;
-    } else if (await userRepository.findOne(userToBeUpdated.index)) {
-      // check if a user with the specified id exists
-      // return a BAD REQUEST status code and error message
-      ctx.status = 400;
-      ctx.body = "The user you are trying to update doesn't exist in the db";
-    } else if (ctx.request.body.password !== ctx.request.body.passwordConfirm) {
-      //password matching checking
-      ctx.status = 400;
-      ctx.body = "The specified password doesn't matched";
-    } else if (
-      await userRepository.findOne({
-        index: Not(Equal(userToBeUpdated.index)),
-        email: Not(Equal(userToBeUpdated.email)),
-        password: Not(Equal(userToBeUpdated.password)),
-      })
-    ) {
-      // return BAD REQUEST status code and email already exists error
-      ctx.status = 400;
-      ctx.body = "The specified e-mail address already exists";
-    } else {
-      // save the user contained in the PUT body
-      const user = await userRepository.save(userToBeUpdated);
-      // return CREATED status code and updated user
-      ctx.status = 201;
-      ctx.body = user;
-    }
+    // if (errors.length > 0) {
+    //   // return BAD REQUEST status code and errors array
+    //   ctx.status = 400;
+    //   ctx.body = errors;
+    // } else if (await userRepository.findOne(userToBeUpdated.index)) {
+    //   // check if a user with the specified id exists
+    //   // return a BAD REQUEST status code and error message
+    //   ctx.status = 400;
+    //   ctx.body = "The user you are trying to update doesn't exist in the db";
+    // } else if (ctx.request.body.password !== ctx.request.body.passwordConfirm) {
+    //   //password matching checking
+    //   ctx.status = 400;
+    //   ctx.body = "The specified password doesn't matched";
+    // } else {
+    //   // save the user contained in the PUT body
+    //   await userRepository.update()
+    //   // return CREATED status code and updated user
+    //   ctx.status = 201;
+    //   ctx.body = user;
+    // }
   }
 
   //{id}User delete the info
