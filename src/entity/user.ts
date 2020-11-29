@@ -80,16 +80,16 @@ export const userSchema = {
 };
 
 //password hashed before input db
-export function hashedPassword(passowrd: any) {
-  return crypto
+export async function hashedPassword(passowrd: any) {
+  return await crypto
     .createHmac("sha256", process.env.SECRET_KEY)
     .update(passowrd)
     .digest("hex");
 }
 
 //compare login input password & db.password
-export function comparePassword(password: any, passwordConfirm: any) {
-  const hahsed = hashedPassword(passwordConfirm);
+export async function comparePassword(password: any, passwordConfirm: any) {
+  const hahsed = await hashedPassword(passwordConfirm);
   return password === hahsed;
 }
 

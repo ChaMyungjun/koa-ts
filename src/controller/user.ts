@@ -75,7 +75,9 @@ export default class UserController {
     const tokenToBeSaved: Token = new Token();
 
     //Generate token
-    const token = generateToken(user.name, user.email, user.password);
+    const EncodedToken = encoded(
+      generateToken(user.name, user.email, user.password)
+    );
 
     const refreshToken = generateRefresh(user.name, user.email);
 
@@ -86,10 +88,9 @@ export default class UserController {
         // return OK status code and loaded user object
         //save token token db
         tokenToBeSaved.Id = user.index;
-        tokenToBeSaved.token = encoded(token);
+        tokenToBeSaved.token = EncodedToken;
         tokenToBeSaved.reToken = encoded(refreshToken);
         tokenToBeSaved.tokenProvider = "local";
-        token;
         ctx.status = 200;
         ctx.body = user;
       }
@@ -157,8 +158,9 @@ export default class UserController {
       // save the user contained in the POST body
       const user = await userRepository.save(userToBeSaved);
       // return CREATED status code and updated user
-      ctx.status = 201;
       ctx.body = user;
+      ctx.redirect("/");
+      ctx.status = 201;
     }
   }
 

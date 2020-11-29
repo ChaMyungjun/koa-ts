@@ -46,9 +46,9 @@ export default class CompanyController {
         ctx.body = errors;
         //comapny db in user.email checking
       } else if (
-        (await companyRepsitory.findOne({
+        await companyRepsitory.findOne({
           companyName: companyToBeSaved.companyName,
-        }))
+        })
       ) {
         ctx.status = 400;
         ctx.body = "CompanyName already exists";
@@ -65,48 +65,45 @@ export default class CompanyController {
   @request("patch", "/company/modify")
   @summary("company info data modiy")
   public static async modifyCompany(ctx: BaseContext): Promise<void> {
-    const companyRegistory: Repository<Company> = getManager().getRepository(
+    const companyRepository: Repository<Company> = getManager().getRepository(
       Company
     );
+    const userRepository: Repository<User> = getManager().getRepository(User);
+    const tokenRepository: Repository<Token> = getManager().getRepository(
+      Token
+    );
 
-    const companyToBeUpdated: Company = new Company();
-    companyToBeUpdated.companyName = ctx.request.body.companyName;
-    companyToBeUpdated.name = ctx.request.body.name;
-    companyToBeUpdated.position = ctx.request.body.position;
-    companyToBeUpdated.phone = ctx.request.body.request;
-    companyToBeUpdated.email = ctx.request.body.email;
-    companyToBeUpdated.image = ctx.request.body.image;
+    const gottenToken = ctx.cookies.get("access_token");
+    const userToBeUpdate = await userRepository.findOne({
+      token: await tokenRepository.findOne({ token: gottenToken }),
+    });
 
-    const errors: ValidationError[] = await validate(companyToBeUpdated);
+    if (userToBeUpdate) {
+      const companyToBeUpdated: Company = new Company();
+      companyToBeUpdated.companyName = ctx.request.body.companyName;
+      companyToBeUpdated.name = ctx.request.body.name;
+      companyToBeUpdated.position = ctx.request.body.position;
+      companyToBeUpdated.phone = ctx.request.body.request;
+      companyToBeUpdated.email = ctx.request.body.email;
+      companyToBeUpdated.image = ctx.request.body.image;
 
-    if (errors.length > 0) {
-      ctx.status = 400;
-      ctx.body = errors;
-    } else if (await companyRegistory.findOne(companyToBeUpdated.index)) {
-      //check if a company with the specified id exists
-      //return a BAD REQUEST status code and error message
-      ctx.status = 400;
-      ctx.bdoy = "Error!";
-    } else if (
-      await companyRegistory.findOne({
-        index: Not(Equal(companyToBeUpdated.index)),
-        companyName: Not(Equal(companyToBeUpdated.companyName)),
-        name: Not(Equal(companyToBeUpdated.name)),
-        position: Not(Equal(companyToBeUpdated.position)),
-        phone: Not(Equal(companyToBeUpdated.phone)),
-        email: Not(Equal(companyToBeUpdated.email)),
-        image: Not(Equal(companyToBeUpdated.image)),
-      })
-    ) {
-      //reqturn BAD REQUEST status code and value already exists
-      ctx.status = 400;
-      ctx.body = "The value is already exists";
-    } else {
-      // save the info contained in the PUT body
-      const company = await companyRegistory.save(companyToBeUpdated);
-      //return CREATE status code and updated company
-      ctx.status = 201;
-      ctx.body = company;
+      const errors: ValidationError[] = await validate(companyToBeUpdated);
+
+      if (errors.length > 0) {
+        ctx.status = 400;
+        ctx.body = errors;
+      } else if (await companyRepository.findOne(companyToBeUpdated.index)) {
+        //check if a company with the specified id exists
+        //return a BAD REQUEST status code and error message
+        ctx.status = 400;
+        ctx.bdoy = "Error!";
+      } else {
+        // save the info contained in the PUT body
+        const company = await companyRepository.save(companyToBeUpdated);
+        //return CREATE status code and updated company
+        ctx.status = 201;
+        ctx.body = company;
+      }
     }
   }
 }
