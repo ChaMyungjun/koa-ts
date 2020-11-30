@@ -158,7 +158,7 @@ export default class UserController {
       ctx.status = 400;
       ctx.body = "The specified password length does not matched";
     } else if (
-      ctx.request.body.password.search(/[`~!@@#$%^&* | \\\\";:\/?`]/gi) < 0 //password special character checking
+      ctx.request.body.password.search(/[`~!@@#$%^&*, | \\\\";:\/?`]/gi) < 0 //password special character checking
     ) {
       ctx.status = 400;
       ctx.body = "The specified password does not exists special character";
