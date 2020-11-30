@@ -6,8 +6,6 @@ import { validate, ValidationError } from "class-validator";
 import { Token, encoded, reencoded } from "../entity/token";
 
 import { User } from "../entity/user";
-import { nextTick } from "process";
-
 export async function NavergetToken(
   accessToken: any,
   refreshToken: any,
@@ -29,17 +27,13 @@ export async function NavergetToken(
     tokenToBeSaved.reToken = retoken;
     tokenToBeSaved.tokenProvider = profile.provider;
 
-    const allTokenData = tokenToBeSaved;
-    console.log(allTokenData);
-
     userToBeSaved.email = profile._json.email;
-    userToBeSaved.token = allTokenData;
+    userToBeSaved.token = tokenToBeSaved;
 
     //error checking
-    const errorsToken: ValidationError[] = await validate(tokenToBeSaved);
-    const errorsUser: ValidationError[] = await validate(userToBeSaved);
+    const errors: ValidationError[] = await validate(tokenToBeSaved);
 
-    if (errorsToken.length > 0 || errorsUser.length > 0) {
+    if (errors.length > 0) {
       console.log("Error");
     } else if (await tokenRepsitory.findOne({ Id: tokenToBeSaved.Id })) {
       try {
@@ -49,16 +43,14 @@ export async function NavergetToken(
         await tokenRepsitory.remove(tokenToRemove).then(async (res) => {
           await tokenRepsitory.save(tokenToBeSaved);
           const user = await userRepository.save(userToBeSaved);
-          console.log("user:", user);
         });
       } catch (err) {
-        console.error("Error!");
+        console.error("Error!", err);
       }
     } else {
       const token = await tokenRepsitory.save(tokenToBeSaved);
       const user = await userRepository.save(userToBeSaved);
-      console.log("token:", token);
-      console.log("user:", user);
+      console.log({ token, user });
     }
   }
 }

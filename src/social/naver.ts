@@ -19,7 +19,7 @@ function NaverStrategy(options: any, verify: any) {
   options = options || {};
 
   options.authorizationURL =
-    options.authorizationURL || `${OAUTH_HOST}/oauth2.0/authorize`;
+  options.authorizationURL || `${OAUTH_HOST}/oauth2.0/authorize`;
   options.tokenURL = options.tokenURL || `${OAUTH_HOST}/oauth2.0/token`;
 
   // @todo Deprecate note: passing of `svcType`, `authType` param via constructor.

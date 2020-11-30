@@ -68,9 +68,11 @@ export default class PaymentController {
       paymentToBeSaved.cardExpire = ctx.request.body.expire;
       paymentToBeSaved.birth = ctx.request.body.birth;
       paymentToBeSaved.cardPassword2digit = ctx.request.body.password;
-      paymentToBeSaved.customerUid = uuid;
       paymentToBeSaved.cardType =
         ctx.request.body.cardType === 1 ? "개인카드" : "법인카드";
+      paymentToBeSaved.companyCardType =
+        ctx.request.companycardtype === 1 ? "개인법인카드" : "회사법인카드";
+      paymentToBeSaved.customerUid = uuid;
 
       // generate billing key
 
@@ -82,16 +84,6 @@ export default class PaymentController {
         paymentToBeSaved.birth,
         paymentToBeSaved.cardPassword2digit
       );
-
-      // cehcking user token
-      // console.log(
-      //   await (await userRepository.find()).map((cur, index) => {
-      //     console.log(cur, "asdfasdfasdf");
-      //   })
-      // );
-
-      //checking user relations with payment
-      // const userRelation = await userRepository.find({ relations: ["user"] });
 
       if (errorsPayment.length > 0) {
         //error checking
@@ -118,6 +110,9 @@ export default class PaymentController {
 
         ctx.status = 201;
       }
+    } else {
+      ctx.status = 403;
+      ctx.body = "Token Expired";
     }
   }
 

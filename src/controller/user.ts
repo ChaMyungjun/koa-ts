@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/camelcase */
 import { BaseContext } from "koa";
 import { getManager, Repository, Like } from "typeorm";
 import { validate, ValidationError } from "class-validator";
@@ -68,39 +69,47 @@ export default class UserController {
     const name = ctx.request.body.name;
     const password = ctx.request.body.password;
 
-    const user: User | undefined = await userRepository.findOne({
+    const findUser: User | undefined = await userRepository.findOne({
       email: name,
     });
 
-    if (user) {
+    if (findUser) {
+      console.log(findUser);
+
       const tokenToBeSaved: Token = new Token();
-
-      //Generate token
-      const EncodedToken = encoded(
-        generateToken(user.name, user.email, user.password)
-      );
-
-      const refreshToken = generateRefresh(user.name, user.email);
 
       const errors: ValidationError[] = await validate(tokenToBeSaved);
 
+      //Generate token
+      const access_token = generateToken();
+
+      const refreshToken = generateRefresh();
+
       //email checking
       //password hashed checking
-      if (comparePassword(user.password, password)) {
+      if (comparePassword(findUser.password, password)) {
         // return OK status code and loaded user object
         //save token token db
-        tokenToBeSaved.Id = user.index;
-        tokenToBeSaved.token = EncodedToken;
+        tokenToBeSaved.Id = findUser.index;
+        tokenToBeSaved.token = access_token;
         tokenToBeSaved.reToken = encoded(refreshToken);
         tokenToBeSaved.tokenProvider = "local";
+
         ctx.status = 200;
-        ctx.body = user;
+        ctx.body = { access_token };
 
         if (errors.length > 0) {
           ctx.status = 400;
         } else {
           await tokenRepository.save(tokenToBeSaved);
-          await userRepository.update(user.index, { token: tokenToBeSaved });
+          const user = await userRepository.update(findUser.index, {
+            token: tokenToBeSaved,
+          });
+
+          console.log(user);
+
+          ctx.status = 200;
+          ctx.body = { access_token };
         }
       }
     } else {

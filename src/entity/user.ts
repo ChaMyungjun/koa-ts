@@ -31,6 +31,7 @@ export class User extends BaseEntity {
 
   //email
   @Column()
+  @IsEmail()
   email: string;
 
   //password
@@ -93,21 +94,16 @@ export async function comparePassword(password: any, passwordConfirm: any) {
   return password === hahsed;
 }
 
-export const generateToken = (name: any, email: any, password: any) => {
-  const token = jwt.sign({ name, email, password }, process.env.JWT_SECRET, {
-    expiresIn: "1h",
+export const generateToken = () => {
+  const random = crypto.randomBytes(21).toString("base64").slice(0, 21);
+  const token = jwt.sign({ random }, process.env.JWT_SECRET, {
+    expiresIn: "1d",
   });
   return token;
 };
 
-export const generateRefresh = (name: any, email: any) => {
-  const token = jwt.sign({ name, email }, process.env.JWT_SECRET);
-  return token;
-};
-
-export const reGenerateToken = (refresh: any) => {
-  const token = jwt.sign({ refresh }, process.env.JWT_SECRET, {
-    expiresIn: "1h",
-  });
+export const generateRefresh = () => {
+  const random = crypto.randomBytes(21).toString("base64").slice(0, 21);
+  const token = jwt.sign({ random }, process.env.JWT_SECRET);
   return token;
 };

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { SwaggerRouter } from "koa-swagger-decorator";
-import { user, company, payment, token } from "./controller";
+import { user, company, payment, token, jwt } from "./controller";
 
 const protectedRouter = new SwaggerRouter();
 
@@ -35,6 +35,9 @@ protectedRouter.post("/payment/normal", payment.normalPayment);
 
 //booked payment
 protectedRouter.post("/payment/bookd", payment.bookedPayment);
+
+//jwt Middleware
+protectedRouter.post("/jwt/check", jwt.regenerateToken);
 
 // Swagger endpoint
 protectedRouter.swagger({

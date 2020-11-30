@@ -11,6 +11,9 @@ import {
 } from "typeorm";
 import jwt from "jsonwebtoken";
 import { User } from "./user";
+import axios from "axios";
+import { TextDecoder } from "util";
+import { createContext } from "vm";
 
 @Entity()
 export class Token extends BaseEntity {
@@ -33,6 +36,11 @@ export class Token extends BaseEntity {
   //refresh_token
   @Column()
   reToken: string;
+
+  @Column({
+    nullable: true,
+  })
+  expire: number;
 
   //create Date
   @CreateDateColumn()
@@ -74,6 +82,22 @@ export function decoded(token: any) {
     decodeToken = value;
   });
   return decodeToken;
+}
+
+export async function naverGenerateToken(state: any, code: any) {
+  const GENERATE_TOKEN_NAVER = `https://nid.naver.com/oauth2.0/token?grant_type=authorization_code&client_id=${process.env.naver_rest_api}&client_secret=${process.env.naver_secret_key}&code=${code}&state=${state}`;
+
+  await axios
+    .post(GENERATE_TOKEN_NAVER)
+    .then((res) => {
+      if (res.status === 200) {
+        console.log(res.data);
+        return res;
+      }
+    })
+    .catch((err) => {
+      console.error("Error: ", err.response.data);
+    });
 }
 
 /**

@@ -79,31 +79,21 @@ export default class CompanyController {
     });
 
     if (userToBeUpdate) {
-      const companyToBeUpdated: Company = new Company();
-      companyToBeUpdated.companyName = ctx.request.body.companyName;
-      companyToBeUpdated.name = ctx.request.body.name;
-      companyToBeUpdated.position = ctx.request.body.position;
-      companyToBeUpdated.phone = ctx.request.body.request;
-      companyToBeUpdated.email = ctx.request.body.email;
-      companyToBeUpdated.image = ctx.request.body.image;
-
-      const errors: ValidationError[] = await validate(companyToBeUpdated);
-
-      if (errors.length > 0) {
-        ctx.status = 400;
-        ctx.body = errors;
-      } else if (await companyRepository.findOne(companyToBeUpdated.index)) {
-        //check if a company with the specified id exists
-        //return a BAD REQUEST status code and error message
-        ctx.status = 400;
-        ctx.bdoy = "Error!";
-      } else {
-        // save the info contained in the PUT body
-        const company = await companyRepository.save(companyToBeUpdated);
-        //return CREATE status code and updated company
-        ctx.status = 201;
-        ctx.body = company;
-      }
+      await companyRepository.update(userToBeUpdate.index, {
+        companyName: ctx.request.body.companyName,
+        name: ctx.request.body.name,
+        email: ctx.request.body.email,
+        position: ctx.request.body.position,
+        phone: ctx.request.body.phone,
+        image: ctx.request.body.phone,
+      });
+      
+      ctx.body = "Modify Success";
+      ctx.redirect("/");
+      ctx.status = 201;
+    } else {
+      ctx.status = 403;
+      ctx.body = "AccessBody";
     }
   }
 }

@@ -31,6 +31,11 @@ export class Payment extends BaseEntity {
   })
   cardType: string;
 
+  @Column({
+    nullable: true,
+  })
+  companyCardType: string;
+
   //card expires day
   @Column()
   cardExpire: string;
