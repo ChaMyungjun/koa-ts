@@ -48,69 +48,69 @@ export default class TokenController {
       const errors: ValidationError[] = await validate(tokenToBeSaved);
 
       console.log(ctx.request.body.state, ctx.request.body.code);
-      const data = await naverGenerateToken(
+      const data: any = await naverGenerateToken(
         ctx.request.body.state,
         ctx.request.body.code
       );
       console.log(data);
 
-      // const access_token = data.access_token;
-      // const refresh_token = data?.refresh_token;
-      // const expires_in = data?.expires_in;
-      const profile = await naverGenerateProfile(data.access_token);
+      const access_token = data.access_token;
+      const refresh_token = data?.refresh_token;
+      const expires_in = data?.expires_in;
+      const profile: any = await naverGenerateProfile(data.access_token);
       console.log(profile);
 
-      // const email = profile.response.email;
-      // const id = profile.response.id;
+      const email = profile.email;
+      const id = profile.id;
 
-      // tokenToBeSaved.token = access_token;
-      // tokenToBeSaved.reToken = refresh_token;
-      // tokenToBeSaved.expire = expires_in;
-      // tokenToBeSaved.Id = id;
+      tokenToBeSaved.token = access_token;
+      tokenToBeSaved.reToken = refresh_token;
+      tokenToBeSaved.expire = expires_in;
+      tokenToBeSaved.Id = id;
 
-      // userToBeSaved.email = email;
-      // userToBeSaved.token = tokenToBeSaved;
+      userToBeSaved.email = email;
+      userToBeSaved.token = tokenToBeSaved;
 
-      // if (errors.length > 0) {
-      //   console.log("Error!: ", errors);
-      // } else if (await tokenRepository.findOne({ Id: tokenToBeSaved.Id })) {
-      //   try {
-      //     console.log("remove");
+      if (errors.length > 0) {
+        console.log("Error!: ", errors);
+      } else if (await tokenRepository.findOne({ Id: tokenToBeSaved.Id })) {
+        try {
+          console.log("remove");
 
-      //     //new Token
-      //     const tokenToRemove:
-      //       | Token
-      //       | undefined = await tokenRepository.findOne({
-      //       Id: tokenToBeSaved.Id,
-      //     });
+          //new Token
+          const tokenToRemove:
+            | Token
+            | undefined = await tokenRepository.findOne({
+            Id: tokenToBeSaved.Id,
+          });
 
-      //     const userToRemove: User | undefined = await userRepository.findOne({
-      //       email: userToBeSaved.email,
-      //     });
+          const userToRemove: User | undefined = await userRepository.findOne({
+            email: userToBeSaved.email,
+          });
 
-      //     await tokenRepository.remove(tokenToRemove).then(async (res) => {
-      //       await tokenRepository.save(tokenToBeSaved);
-      //       console.log("tokenRepository Remove");
-      //     });
+          await tokenRepository.remove(tokenToRemove).then(async (res) => {
+            await tokenRepository.save(tokenToBeSaved);
+            console.log("tokenRepository Remove");
+          });
 
-      //     await userRepository.remove(userToRemove).then(async (res) => {
-      //       await userRepository.save(userToBeSaved);
-      //       console.log("userRepository Remove");
-      //     });
+          await userRepository.remove(userToRemove).then(async (res) => {
+            await userRepository.save(userToBeSaved);
+            console.log("userRepository Remove");
+          });
 
-      //     ctx.body = { access_token, refresh_token, expires_in };
-      //     ctx.status = 201;
-      //   } catch (err) {
-      //     console.error("Error!", err);
-      //   }
-      // } else {
-      //   await tokenRepository.save(tokenToBeSaved);
-      //   await userRepository.save(userToBeSaved);
-      //   //console.log({ user, token });
-      //   ctx.body = { access_token, refresh_token, expires_in };
-      //   ctx.redirect("/");
-      //   ctx.status = 200;
-      // }
+          ctx.body = { access_token, refresh_token, expires_in };
+          ctx.status = 201;
+        } catch (err) {
+          console.error("Error!", err);
+        }
+      } else {
+        await tokenRepository.save(tokenToBeSaved);
+        await userRepository.save(userToBeSaved);
+        //console.log({ user, token });
+        ctx.body = { access_token, refresh_token, expires_in };
+        ctx.redirect("/");
+        ctx.status = 200;
+      }
 
       ctx.status = 404;
       ctx.body = { Test: "asdfasdf" };
