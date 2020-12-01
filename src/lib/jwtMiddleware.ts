@@ -6,7 +6,6 @@ import axios from "axios";
 import { Token, decoded, encoded } from "../entity/token";
 import { User } from "../entity/user";
 import { Repository, getManager } from "typeorm";
-import { reGenerateToken } from "../entity/user";
 
 //token check url
 const CHECK_TOKEN_KAKAO = "https://kapi.kakao.com/v1/user/access_token_info";

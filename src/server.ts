@@ -54,10 +54,6 @@ try {
       const app = new Koa();
       app.keys = ["super-secret1", "super-secret2"];
 
-      //appyling connection to model
-      User.useConnection(connection);
-      Token.useConnection(connection);
-
       //user modify setting
       const canModifyUsers = ({ currentAdmin }: any) =>
         currentAdmin && currentAdmin.role === "admin";
@@ -162,8 +158,16 @@ try {
       // );
 
       //passport initialize setting
-      // app.use(passport.initialize());
-      // app.use(passport.session());
+      app.use(passport.initialize());
+      app.use(passport.session());
+
+      app.use(async (ctx) => {
+        ctx.isAuthenticated();
+        ctx.isUnauthenticated();
+        // await ctx.login();
+        // ctx.logout();
+        // ctx.state.user();
+      });
 
       // Register cron job to do any action needed
       cron.start();
@@ -173,6 +177,6 @@ try {
       });
     })
     .catch((error: string) => console.log("TypeORM connection error: ", error));
-} catch (e) {
-  console.error(e);
+} catch (err) {
+  console.error(err);
 }

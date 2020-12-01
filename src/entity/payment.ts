@@ -13,9 +13,6 @@ import {
 } from "typeorm";
 import axios from "axios";
 
-import { User } from "./user";
-import { ConsoleTransportOptions } from "winston/lib/winston/transports";
-
 @Entity()
 export class Payment extends BaseEntity {
   @PrimaryGeneratedColumn()
@@ -26,27 +23,8 @@ export class Payment extends BaseEntity {
   cardNumber: string;
 
   //card Type
-  @Column({
-    nullable: true,
-  })
+  @Column()
   cardType: string;
-
-  @Column({
-    nullable: true,
-  })
-  companyCardType: string;
-
-  //card expires day
-  @Column()
-  cardExpire: string;
-
-  //user birthday
-  @Column()
-  birth: string;
-
-  //card password firtst & second
-  @Column()
-  cardPassword2digit: string;
 
   //customre uid => random create
   @Column()
@@ -110,29 +88,26 @@ export async function issueBilling(
   password2digit: any
 ) {
   const billingURL = `https://api.iamport.kr/subscribe/customers/s${customeruId}`;
-  const firstPayment = "https://api.iamport.kr/subscribe/payments/onetime/";
+  const firstPaymentURL = "https://api.iamport.kr/subscribe/payments/onetime/";
+  try {
+    let firstPayment, paymentResult;
 
-  await axios({
-    url: firstPayment,
-    method: "POST",
-    headers: { Authorization: `${accessToken}` },
-    data: {
-      card_number: cardNumber,
-      expiry: cardExpire,
-      merchant_uid: "order_monthly_001",
-      amount: 200,
-      name: "월간 이용권 결제",
-    },
-  })
-    .then((res) => {
-      console.log(res.data);
-    })
-    .catch((err) => {
-      console.error(err.response.data);
+    await axios({
+      url: firstPaymentURL,
+      method: "POST",
+      headers: { Authorization: `${accessToken}` },
+      data: {
+        card_number: cardNumber,
+        expiry: cardExpire,
+        merchant_uid: "order_monthly_001",
+        amount: 200,
+        name: "월간 이용권 결제",
+      },
+    }).then((res) => {
+      firstPayment = res;
     });
 
-  try {
-    const paymentResult = await axios({
+    await axios({
       url: billingURL,
       method: "POST",
       headers: { Authorization: `${accessToken}` },
@@ -142,11 +117,13 @@ export async function issueBilling(
         birth: userBirth,
         pwd_2digit: password2digit,
       },
-    }).catch((err) => {
-      console.error(err.response.data);
+    }).then((res) => {
+      paymentResult = res;
     });
+
+    return { firstPayment, paymentResult };
   } catch (err) {
-    console.error("Error: ", err);
+    console.error("Error");
   }
 }
 
@@ -213,3 +190,10 @@ export async function bookedPayment(
       console.error(err);
     });
 }
+
+/**
+ *
+ *
+ * CompanyInfoPage => company:string, name: string, position:string, phone:string, email:string, business: {file: jpg,png , path: ''"}
+ *
+ */

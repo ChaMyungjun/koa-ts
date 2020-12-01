@@ -31,13 +31,13 @@ export default class CompanyController {
 
     if (userToBeUpdate) {
       const companyToBeSaved: Company = new Company();
-
-      companyToBeSaved.companyName = ctx.request.companyName;
+      
+      companyToBeSaved.companyName = ctx.request.company;
       companyToBeSaved.name = ctx.request.body.name;
       companyToBeSaved.email = ctx.request.body.email;
       companyToBeSaved.position = ctx.request.body.position;
       companyToBeSaved.phone = ctx.request.body.phone;
-      companyToBeSaved.image = ctx.request.body.image;
+      companyToBeSaved.image = ctx.request.body.business.path;
 
       const errors: ValidationError[] = await validate(companyToBeSaved);
 
@@ -87,7 +87,7 @@ export default class CompanyController {
         phone: ctx.request.body.phone,
         image: ctx.request.body.phone,
       });
-      
+
       ctx.body = "Modify Success";
       ctx.redirect("/");
       ctx.status = 201;

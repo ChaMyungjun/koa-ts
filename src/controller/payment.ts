@@ -15,9 +15,8 @@ import {
   normalPayment,
   bookedPayment,
 } from "../entity/payment";
-import { ConsoleTransportOptions } from "winston/lib/winston/transports";
 import { Token, decoded } from "../entity/token";
-import { payment } from ".";
+import { timingSafeEqual } from "crypto";
 
 @responsesAll(["Payment"])
 export default class PaymentController {
@@ -35,7 +34,7 @@ export default class PaymentController {
       Token
     );
 
-    const gottenToken = ctx.cookies.get("access_token");
+    const gottenToken = ctx.request.body.token;
 
     console.log(ctx.request.body);
 
@@ -53,7 +52,7 @@ export default class PaymentController {
     });
 
     if (userToBeUpdate) {
-      console.log("pass");
+      console.log(userToBeUpdate);
       //craete random customer uuid
       const uuid = uuidv4();
 
@@ -64,26 +63,23 @@ export default class PaymentController {
       //validate payment entity
       const errorsPayment: ValidationError[] = await validate(paymentToBeSaved);
 
-      paymentToBeSaved.cardNumber = ctx.request.body.cardNum;
-      paymentToBeSaved.cardExpire = ctx.request.body.expire;
-      paymentToBeSaved.birth = ctx.request.body.birth;
-      paymentToBeSaved.cardPassword2digit = ctx.request.body.password;
+      paymentToBeSaved.cardNumber = ctx.request.body.cardNum.slice(-4);
       paymentToBeSaved.cardType =
         ctx.request.body.cardType === 1 ? "개인카드" : "법인카드";
-      paymentToBeSaved.companyCardType =
-        ctx.request.companycardtype === 1 ? "개인법인카드" : "회사법인카드";
       paymentToBeSaved.customerUid = uuid;
 
       // generate billing key
 
       await issueBilling(
-        paymentToBeSaved.customerUid,
+        ctx.request.body.customerUid,
         await getToken(),
-        paymentToBeSaved.cardNumber,
-        paymentToBeSaved.cardExpire,
-        paymentToBeSaved.birth,
-        paymentToBeSaved.cardPassword2digit
-      );
+        ctx.request.body.cardNum,
+        ctx.request.body.expire,
+        ctx.request.body.birth,
+        ctx.request.body.password
+      ).then((res) => {
+        console.log(res);
+      });
 
       if (errorsPayment.length > 0) {
         //error checking
@@ -95,12 +91,15 @@ export default class PaymentController {
         })
       ) {
         ctx.status = 400;
-        ctx.body = "CardNumber already exists";
-      } else if (
-        await paymentRepository.findOne({ birth: paymentToBeSaved.birth })
-      ) {
-        ctx.status = 400;
-        ctx.body = "Brith already exist";
+        ctx.body = "Card already exist";
+      } else if (uuid === paymentToBeSaved.customerUid) {
+        const uuid = uuidv4();
+        paymentToBeSaved.customerUid = uuid;
+
+        await paymentRepository.save(paymentToBeSaved);
+        await userRepository.update(userToBeUpdate.index, {
+          payment: paymentToBeSaved,
+        });
       } else {
         const payment = await paymentRepository.save(paymentToBeSaved);
         const user = await userRepository.update(userToBeUpdate.index, {
@@ -112,7 +111,7 @@ export default class PaymentController {
       }
     } else {
       ctx.status = 403;
-      ctx.body = "Token Expired";
+      ctx.body = { error: "Token doesn't exist" };
     }
   }
 
@@ -135,8 +134,9 @@ export default class PaymentController {
     );
     const userRepository: Repository<User> = getManager().getRepository(User);
 
-    //console.log(await userRepository.find({ relations: ["payment"] }));
+    console.log(await userRepository.find({ relations: ["payment"] }));
     console.log(await userRepository.find({ relations: ["company"] }));
+    console.log(await userRepository.find({ relations: ["token"] }));
 
     // let userCustomerUid: any = null
 

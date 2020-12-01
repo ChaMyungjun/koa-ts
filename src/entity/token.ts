@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/camelcase */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
@@ -14,6 +15,7 @@ import { User } from "./user";
 import axios from "axios";
 import { TextDecoder } from "util";
 import { createContext } from "vm";
+import { ConsoleTransportOptions } from "winston/lib/winston/transports";
 
 @Entity()
 export class Token extends BaseEntity {
@@ -85,15 +87,31 @@ export function decoded(token: any) {
 }
 
 export async function naverGenerateToken(state: any, code: any) {
-  const GENERATE_TOKEN_NAVER = `https://nid.naver.com/oauth2.0/token?grant_type=authorization_code&client_id=${process.env.naver_rest_api}&client_secret=${process.env.naver_secret_key}&code=${code}&state=${state}`;
+  console.log(state, code);
+  const GENERATE_TOKEN_NAVER = `https://nid.naver.com/oauth2.0/token?client_id=${process.env.naver_rest_api}&client_secret=${process.env.naver_secret_key}&grant_type=authorization_code&state=${state}&code=${code}`;
+
+  //nid.naver.com/oauth2.0/token?client_id={클라이언트 아이디}&client_secret={클라이언트 시크릿}&grant_type=authorization_code&state={상태 토큰}&code={인증 코드}
+  await axios
+    .get(GENERATE_TOKEN_NAVER)
+    .then((res) => {
+      console.log(res.data);
+      return res.data;
+    })
+    .catch((err) => {
+      console.error("Error:", err.response.data);
+    });
+}
+
+export async function naverGenerateProfile(access_token: any) {
+  const GENERATE_PROFILE_NAVER = "https://openapi.naver.com/v1/nid/me";
 
   await axios
-    .post(GENERATE_TOKEN_NAVER)
+    .post(GENERATE_PROFILE_NAVER, {
+      headers: { Authorization: `Bearer ${access_token}` },
+    })
     .then((res) => {
-      if (res.status === 200) {
-        console.log(res.data);
-        return res;
-      }
+      console.log(res);
+      return res.data;
     })
     .catch((err) => {
       console.error("Error: ", err.response.data);

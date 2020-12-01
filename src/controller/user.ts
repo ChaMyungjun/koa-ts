@@ -66,7 +66,7 @@ export default class UserController {
     //first checking email and then password checking
     // load user by email
     //email value checking
-    const name = ctx.request.body.name;
+    const name = ctx.request.body.email;
     const password = ctx.request.body.password;
 
     const findUser: User | undefined = await userRepository.findOne({
@@ -83,7 +83,8 @@ export default class UserController {
       //Generate token
       const access_token = generateToken();
 
-      const refreshToken = generateRefresh();
+      const refresh_token = generateRefresh();
+      const expires_in = 60 * 60 * 24;
 
       //email checking
       //password hashed checking
@@ -92,11 +93,8 @@ export default class UserController {
         //save token token db
         tokenToBeSaved.Id = findUser.index;
         tokenToBeSaved.token = access_token;
-        tokenToBeSaved.reToken = encoded(refreshToken);
+        tokenToBeSaved.reToken = refresh_token;
         tokenToBeSaved.tokenProvider = "local";
-
-        ctx.status = 200;
-        ctx.body = { access_token };
 
         if (errors.length > 0) {
           ctx.status = 400;
@@ -109,7 +107,7 @@ export default class UserController {
           console.log(user);
 
           ctx.status = 200;
-          ctx.body = { access_token };
+          ctx.body = { access_token, refresh_token, expires_in };
         }
       }
     } else {
@@ -151,7 +149,10 @@ export default class UserController {
       //Email exists checking
       // return BAD REQUEST status code and email already exists error
       ctx.status = 400;
-      ctx.body = "The specified e-mail address already exists";
+      ctx.body = {
+        email: "The specified e-mail address already exists",
+        name: null,
+      };
     } else if (ctx.request.body.password.length < 6) {
       //password length checking
       // return BAD REQUEST status code and password does not matched error
@@ -162,21 +163,15 @@ export default class UserController {
     ) {
       ctx.status = 400;
       ctx.body = "The specified password does not exists special character";
-    } else if (ctx.request.body.password !== ctx.request.body.passwordConfirm) {
-      //password same as passwordConfirm
-      ctx.status = 400;
-      ctx.body = "The specified password doesn't matched";
     } else if (await userRepository.findOne({ name: userToBeSaved.name })) {
       //username exists checking
       //return BAD REQUEST status code and name already exists error
       ctx.status = 400;
-      ctx.body = "The specified name already exists";
+      ctx.body = { name: "The specified name already exists", email: null };
     } else {
       // save the user contained in the POST body
-      const user = await userRepository.save(userToBeSaved);
+      await userRepository.save(userToBeSaved);
       // return CREATED status code and updated user
-      ctx.body = user;
-      ctx.redirect("/");
       ctx.status = 201;
     }
   }
@@ -195,7 +190,7 @@ export default class UserController {
       Token
     );
     //const companyRepositoyry: Repository<Company> = getManager().getRepository(Company);
-    const gottenToken = ctx.cookies.get("access_token");
+    const gottenToken = ctx.request.body.token;
     const userToBeUpdate = await userRepository.findOne({
       token: await tokenRepository.findOne({ token: gottenToken }),
     });

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/camelcase */
 /* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -5,9 +6,14 @@ import { BaseContext } from "koa";
 import { getManager, Repository, createConnection } from "typeorm";
 import { validate, ValidationError } from "class-validator";
 import { request, summary, tagsAll, responsesAll } from "koa-swagger-decorator";
-import { Token, encoded, naverGenerateToken } from "../entity/token";
+import {
+  Token,
+  encoded,
+  naverGenerateToken,
+  naverGenerateProfile,
+} from "../entity/token";
 import { User } from "../entity/user";
-import { ConsoleTransportOptions } from "winston/lib/winston/transports";
+import { token } from ".";
 
 @responsesAll({
   200: { description: "success" },
@@ -36,67 +42,82 @@ export default class TokenController {
     const tokenToBeSaved: Token = new Token();
     const userToBeSaved: User = new User();
 
-    //validate token entity
-    const errors: ValidationError[] = await validate(tokenToBeSaved);
-
     if (ctx.request.body.backend === "naver") {
       console.log("naver");
+      //validate token entity
+      const errors: ValidationError[] = await validate(tokenToBeSaved);
 
-      console.log(
-        naverGenerateToken(ctx.request.body.state, ctx.request.body.token)
+      console.log(ctx.request.body.state, ctx.request.body.code);
+      const data = await naverGenerateToken(
+        ctx.request.body.state,
+        ctx.request.body.code
       );
+      console.log(data);
 
-      // const access_token = data.response.access_token;
-      // const refresh_token = data.refresh_token;
-      // const expires_in = data.expires_in;
+      // const access_token = data.access_token;
+      // const refresh_token = data?.refresh_token;
+      // const expires_in = data?.expires_in;
+      const profile = await naverGenerateProfile(data.access_token);
+      console.log(profile);
 
-      // tokenToBeSaved.token = data.access_token;
-      // tokenToBeSaved.tokenProvider = tokenInfo.backend;
-      // tokenToBeSaved.reToken = data.refresh_token;
-      // tokenToBeSaved.Id = tokenInfo.id;
-      tokenToBeSaved.expire = tokenInfo.expires_in;
+      // const email = profile.response.email;
+      // const id = profile.response.id;
 
-      userToBeSaved.email = tokenInfo.email;
-      userToBeSaved.token = tokenToBeSaved;
+      // tokenToBeSaved.token = access_token;
+      // tokenToBeSaved.reToken = refresh_token;
+      // tokenToBeSaved.expire = expires_in;
+      // tokenToBeSaved.Id = id;
 
-      if (errors.length > 0) {
-        ctx.status = 400;
-        ctx.body = "Body";
-      } else if (await tokenRepository.findOne({ Id: tokenToBeSaved.Id })) {
-        try {
-          console.log("remove");
+      // userToBeSaved.email = email;
+      // userToBeSaved.token = tokenToBeSaved;
 
-          //new Token
-          const tokenToRemove:
-            | Token
-            | undefined = await tokenRepository.findOne({
-            Id: tokenToBeSaved.Id,
-          });
+      // if (errors.length > 0) {
+      //   console.log("Error!: ", errors);
+      // } else if (await tokenRepository.findOne({ Id: tokenToBeSaved.Id })) {
+      //   try {
+      //     console.log("remove");
 
-          const userToRemove: User | undefined = await userRepository.findOne({
-            email: userToBeSaved.email,
-          });
+      //     //new Token
+      //     const tokenToRemove:
+      //       | Token
+      //       | undefined = await tokenRepository.findOne({
+      //       Id: tokenToBeSaved.Id,
+      //     });
 
-          await tokenRepository.remove(tokenToRemove).then(async (res) => {
-            await tokenRepository.save(tokenToBeSaved);
-            console.log("tokenRepository Remove");
-          });
+      //     const userToRemove: User | undefined = await userRepository.findOne({
+      //       email: userToBeSaved.email,
+      //     });
 
-          await userRepository.remove(userToRemove).then(async (res) => {
-            await userRepository.save(userToBeSaved);
-            console.log("userRepository Remove");
-          });
-        } catch (err) {
-          console.error("Error: ", err);
-        }
-      } else {
-        await tokenRepository.save(tokenToBeSaved);
-        await userRepository.save(userToBeSaved);
-        ctx.body = { access_token, refresh_token, expires_in };
-        ctx.redirect("/");
-        ctx.status = 200;
-      }
+      //     await tokenRepository.remove(tokenToRemove).then(async (res) => {
+      //       await tokenRepository.save(tokenToBeSaved);
+      //       console.log("tokenRepository Remove");
+      //     });
+
+      //     await userRepository.remove(userToRemove).then(async (res) => {
+      //       await userRepository.save(userToBeSaved);
+      //       console.log("userRepository Remove");
+      //     });
+
+      //     ctx.body = { access_token, refresh_token, expires_in };
+      //     ctx.status = 201;
+      //   } catch (err) {
+      //     console.error("Error!", err);
+      //   }
+      // } else {
+      //   await tokenRepository.save(tokenToBeSaved);
+      //   await userRepository.save(userToBeSaved);
+      //   //console.log({ user, token });
+      //   ctx.body = { access_token, refresh_token, expires_in };
+      //   ctx.redirect("/");
+      //   ctx.status = 200;
+      // }
+
+      ctx.status = 404;
+      ctx.body = { Test: "asdfasdf" };
     }
+
+    //validate token entity
+    const errors: ValidationError[] = await validate(tokenToBeSaved);
 
     //kakao data info
     tokenToBeSaved.token = access_token;
