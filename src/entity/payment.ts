@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/camelcase */
@@ -9,6 +10,7 @@ import {
   CreateDateColumn,
 } from "typeorm";
 import axios from "axios";
+import { access } from "fs";
 
 @Entity()
 export class Payment extends BaseEntity {
@@ -25,6 +27,9 @@ export class Payment extends BaseEntity {
 
   @Column({ nullable: true })
   corporationType: string;
+
+  @Column({ nullable: true })
+  merchantUid: string;
 
   //customre uid => random create
   @Column()
@@ -58,7 +63,7 @@ export async function uuidv4() {
 export async function getToken() {
   const tokenURL = "https://api.iamport.kr/users/getToken";
   const impKey = process.env.iamporter_api_key;
-  const imptSecret = process.env.iamporter_api_secret;
+  const impSecret = process.env.iamporter_api_secret;
 
   let token: any = null;
 
@@ -68,7 +73,7 @@ export async function getToken() {
     headers: { "Content-Type": "application/json" },
     data: {
       imp_key: impKey,
-      imp_secret: imptSecret,
+      imp_secret: impSecret,
     },
   })
     .then((res) => {
@@ -86,54 +91,39 @@ export async function issueBilling(
   cardNumber: any,
   cardExpire: any,
   userBirth: any,
-  password2digit: any
+  password2digit: any,
+  merchant_uid: any
 ) {
-  console.log(customer_uid);
-
   const billingURL = `https://api.iamport.kr/subscribe/customers/${customer_uid}`;
   const firstPaymentURL = "https://api.iamport.kr/subscribe/payments/onetime/";
-  try {
-    let firstPayment, paymentResult;
+  let firstPay: any = null;
+  let billingPay: any = null;
+  let allPay: any = null;
 
+  try {
     await axios({
       url: firstPaymentURL,
-      method: "POST",
-      headers: { Authorization: `${accessToken}` },
+      method: "POST", 
+      headers: { Authorization: accessToken },
       data: {
         card_number: cardNumber,
         expiry: cardExpire,
-        merchant_uid: "order_monthly_001",
+        merchant_uid: merchant_uid,
         amount: 200,
+        customer_uid: customer_uid,
         name: "월간 이용권 결제",
       },
     })
       .then((res) => {
-        firstPayment = res;
-        console.log(res.data);
+        firstPay = res.data;
       })
       .catch((err) => {
-        console.error("Error: ", err);
+        firstPay = err.response.data;
       });
-
-    await axios({
-      url: billingURL,
-      method: "POST",
-      headers: { Authorization: `${accessToken}` },
-      data: {
-        card_number: cardNumber,
-        expiry: cardExpire,
-        birth: userBirth,
-        pwd_2digit: password2digit,
-      },
-    }).then((res) => {
-      paymentResult = res;
-      console.log(res.data);
-    });
-
-    return { firstPayment, paymentResult };
   } catch (err) {
-    console.error("Error", err);
+    allPay = err.response.data;
   }
+  return { billingPay, firstPay, allPay };
 }
 
 export async function normalPayment(

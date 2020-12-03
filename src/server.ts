@@ -24,6 +24,7 @@ import { config } from "./config";
 import { unprotectedRouter } from "./unprotectedRoutes";
 import { protectedRouter } from "./protectedRoutes";
 import { cron } from "./cron";
+import { Member } from "./entity/member";
 
 Resource.validate = validate;
 
@@ -98,6 +99,14 @@ try {
             options: {
               parent: {
                 name: "Superitend Company",
+              },
+            },
+          },
+          {
+            resource: Member,
+            options: {
+              parent: {
+                name: "Supertiend Member",
               },
             },
           },

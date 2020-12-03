@@ -32,7 +32,7 @@ protectedRouter.patch("/company/modify", company.modifyCompany);
 protectedRouter.post("/payment/member/create", payment.createPaymentInfo);
 
 //Booking pamynet callback
-protectedRouter.get("/payment/member/callback", payment.callbackPayment)
+protectedRouter.get("/payment/member/callback", payment.callbackPayment);
 
 //norml payment
 protectedRouter.post("/payment/normal", payment.normalPayment);

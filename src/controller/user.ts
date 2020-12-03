@@ -19,7 +19,7 @@ import {
   generateRefresh,
 } from "../entity/user";
 
-import { Token, encoded } from "../entity/token";
+import { Token } from "../entity/token";
 //import { Company } from "src/entity/company";
 
 @responsesAll({

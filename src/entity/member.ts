@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/camelcase */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -67,6 +68,8 @@ export async function bookedPayment(
   amount: any,
   Name: any
 ) {
+  let billingData: any = null;
+  console.log(customerUid)
   const date = new Date();
   date.setMonth(date.getMonth() + 1);
   date.setHours(9);
@@ -90,9 +93,10 @@ export async function bookedPayment(
     },
   })
     .then((res) => {
-      console.log(res.data);
+      billingData = res.data;
     })
     .catch((err) => {
-      console.error(err);
+      billingData = err.resposne.data;
     });
+  return billingData;
 }
