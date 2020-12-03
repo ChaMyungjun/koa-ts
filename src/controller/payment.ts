@@ -1,11 +1,14 @@
+/* eslint-disable @typescript-eslint/camelcase */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { BaseContext } from "koa";
 import { request, responsesAll, summary } from "koa-swagger-decorator";
 import { getManager, Repository, Equal, Not, createConnection } from "typeorm";
 import { IsEmail, validate, ValidationError } from "class-validator";
+import axios from "axios";
 
 import { User } from "../entity/user";
+import { Member, meruuid4, bookedPayment } from "../entity/member";
 
 import {
   Payment,
@@ -13,14 +16,12 @@ import {
   getToken,
   issueBilling,
   normalPayment,
-  bookedPayment,
 } from "../entity/payment";
 import { Token, decoded } from "../entity/token";
-import { timingSafeEqual } from "crypto";
 
 @responsesAll(["Payment"])
 export default class PaymentController {
-  @request("post", "/payment/create")
+  @request("post", "/payment/meber/craete")
   @summary("create payment info")
   public static async createPaymentInfo(ctx: BaseContext): Promise<void> {
     //get a payment to perform operations with paymenrt
@@ -33,10 +34,13 @@ export default class PaymentController {
     const tokenRepository: Repository<Token> = await getManager().getRepository(
       Token
     );
+    const memberRepository: Repository<Member> = await getManager().getRepository(
+      Member
+    );
 
     const gottenToken = ctx.request.body.token;
 
-    console.log(ctx.request.body);
+    // console.log(ctx.request.body);
 
     console.log(
       "user token value: ",
@@ -51,34 +55,69 @@ export default class PaymentController {
       token: await tokenRepository.findOne({ token: gottenToken }),
     });
 
+    console.log(gottenToken);
+
+    const howMatch = await memberRepository.find();
+
     if (userToBeUpdate) {
       console.log(userToBeUpdate);
       //craete random customer uuid
-      const uuid = uuidv4();
+      const uuid = await uuidv4();
+      const meruuid = await meruuid4();
+
+      console.log(uuid, meruuid);
+
+      const date = new Date();
+      date.setMonth(date.getMonth() + 1);
+      date.setHours(9);
 
       //create entity
       //build up entity payment info to be saved
       const paymentToBeSaved: Payment = new Payment();
+      const memberToBeSaved: Member = new Member();
 
       //validate payment entity
       const errorsPayment: ValidationError[] = await validate(paymentToBeSaved);
 
       paymentToBeSaved.cardNumber = ctx.request.body.cardNum.slice(-4);
       paymentToBeSaved.cardType =
-        ctx.request.body.cardType === 1 ? "개인카드" : "법인카드";
+        ctx.request.body.type === 1 ? "법인카드" : "개인카드";
+      paymentToBeSaved.corporationType =
+        ctx.request.body.CorporationType === 1
+          ? "개인법인카드"
+          : "공용법인카드";
       paymentToBeSaved.customerUid = uuid;
 
-      // generate billing key
+      memberToBeSaved.member =
+        ctx.request.body.membershipType === 0
+          ? "free"
+          : ctx.request.body.membershipType === 1
+          ? "business"
+          : "enterprise";
+      memberToBeSaved.merchantUid = meruuid;
+      // memberToBeSaved.pay =
+      memberToBeSaved.amount =
+        ctx.request.body.membershipType === 0 ? 30000 : null;
+
+      memberToBeSaved.scheduledAt = date;
 
       await issueBilling(
-        ctx.request.body.customerUid,
+        paymentToBeSaved.customerUid,
         await getToken(),
         ctx.request.body.cardNum,
         ctx.request.body.expire,
         ctx.request.body.birth,
         ctx.request.body.password
-      ).then((res) => {
-        console.log(res);
+      ).then(async (res) => {
+        //console.log(res);
+        await bookedPayment(
+          paymentToBeSaved.customerUid,
+          memberToBeSaved.merchantUid,
+          200,
+          "월별 예약 결제"
+        ).then((res) => {
+          //console.log(res);
+        });
       });
 
       if (errorsPayment.length > 0) {
@@ -93,7 +132,7 @@ export default class PaymentController {
         ctx.status = 400;
         ctx.body = "Card already exist";
       } else if (uuid === paymentToBeSaved.customerUid) {
-        const uuid = uuidv4();
+        const uuid: any = await uuidv4();
         paymentToBeSaved.customerUid = uuid;
 
         await paymentRepository.save(paymentToBeSaved);
@@ -115,12 +154,22 @@ export default class PaymentController {
     }
   }
 
-  @request("post", "/payment/pay")
+  @request("post", "/payment/member/callback")
   @summary("payment User Product")
-  public static async createOrder(ctx: BaseContext): Promise<void> {
-    // const UserPayment = IamportPayment();
-    // console.log(UserPayment);
-    console.log("Payment");
+  public static async callbackPayment(ctx: BaseContext): Promise<void> {
+    const { imp_uid, merchant_uid } = ctx.request.body;
+    const access_token = getToken();
+
+    const paymentDataURL = `https://api.iamport.kr/payments/${imp_uid}`;
+
+    const getPaymentData = await axios({
+      url: paymentDataURL,
+      method: "get",
+      headers: { Authorization: access_token },
+    });
+
+    const paymentData = getPaymentData.data.response;
+    console.log(paymentData);
   }
 
   @request("post", "/payment/normalpayment")
@@ -155,29 +204,15 @@ export default class PaymentController {
     //   )
     // );
   }
-
-  @request("post", "/payment/booked")
-  @summary("booked payment")
-  public static async bookedPayment(ctx: BaseContext): Promise<void> {
-    const bookedPaymentRepository: Repository<Payment> = getManager().getRepository(
-      Payment
-    );
-
-    let userCustomerUid: any = null;
-
-    const bookedPayments: Payment[] = await bookedPaymentRepository.find();
-
-    bookedPayments.map((cur, index) => {
-      userCustomerUid = cur.customerUid;
-    });
-
-    // console.log(
-    //   await bookedPayment(
-    //     userCustomerUid,
-    //     "order_monthly_0001",
-    //     200,
-    //     "월간 이용권 정기 결제 테스팅"
-    //   )
-    // );
-  }
 }
+
+/**
+ *
+ *
+ * personel card
+ * 개인카드 : type: num, membershipType:num,cardNum: num, expire: num, password: num, birth: num
+ *
+ * lawer card
+ * 법인카드: type: num, membershipType:num,CorporationType:num,cardNum: num, expire: num, password: num,  businessNum: num
+ *
+ */

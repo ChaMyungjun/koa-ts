@@ -7,9 +7,6 @@ import { user, company, payment, token, jwt } from "./controller";
 
 const protectedRouter = new SwaggerRouter();
 
-//naver user data
-let naverUser: any = {};
-
 // USER ROUTES
 protectedRouter.get("/users", user.getUsers); //All Member find
 protectedRouter.post("/user/login", user.getUser); //Login
@@ -32,13 +29,13 @@ protectedRouter.post("/company/register", company.createCompany);
 protectedRouter.patch("/company/modify", company.modifyCompany);
 
 //Payment ROUTES
-protectedRouter.post("/payment/create", payment.createPaymentInfo);
+protectedRouter.post("/payment/member/create", payment.createPaymentInfo);
+
+//Booking pamynet callback
+protectedRouter.get("/payment/member/callback", payment.callbackPayment)
 
 //norml payment
 protectedRouter.post("/payment/normal", payment.normalPayment);
-
-//booked payment
-protectedRouter.post("/payment/bookd", payment.bookedPayment);
 
 //jwt Middleware
 protectedRouter.post("/jwt/check", jwt.regenerateToken);
@@ -82,12 +79,12 @@ protectedRouter.post("/jwt/check", jwt.regenerateToken);
 // );
 
 // // Swagger endpoint
-// protectedRouter.swagger({
-//   title: "node-typescript-koa-rest",
-//   description:
-//     "API REST using NodeJS and KOA framework, typescript. TypeORM for SQL with class-validators. Middlewares JWT, CORS, Winston Logger.",
-//   version: "1.5.0",
-// });
+protectedRouter.swagger({
+  title: "node-typescript-koa-rest",
+  description:
+    "API REST using NodeJS and KOA framework, typescript. TypeORM for SQL with class-validators. Middlewares JWT, CORS, Winston Logger.",
+  version: "1.5.0",
+});
 
 // mapDir will scan the input dir, and mautomatically call router.map to all Router Class
 protectedRouter.mapDir(__dirname);

@@ -6,9 +6,6 @@ import {
   Column,
   PrimaryGeneratedColumn,
   BaseEntity,
-  OneToOne,
-  JoinColumn,
-  AdvancedConsoleLogger,
   CreateDateColumn,
 } from "typeorm";
 import axios from "axios";
@@ -25,6 +22,9 @@ export class Payment extends BaseEntity {
   //card Type
   @Column()
   cardType: string;
+
+  @Column({ nullable: true })
+  corporationType: string;
 
   //customre uid => random create
   @Column()
@@ -46,8 +46,9 @@ export const Paymentschema = {
 };
 
 //customer uudi generate
-export function uuidv4() {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+export async function uuidv4() {
+  const character = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx";
+  return character.replace(/[xy]/g, function (c) {
     const r = (Math.random() * 16) | 0,
       v = c == "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
@@ -80,14 +81,16 @@ export async function getToken() {
 }
 
 export async function issueBilling(
-  customeruId: any,
+  customer_uid: any,
   accessToken: any,
   cardNumber: any,
   cardExpire: any,
   userBirth: any,
   password2digit: any
 ) {
-  const billingURL = `https://api.iamport.kr/subscribe/customers/s${customeruId}`;
+  console.log(customer_uid);
+
+  const billingURL = `https://api.iamport.kr/subscribe/customers/${customer_uid}`;
   const firstPaymentURL = "https://api.iamport.kr/subscribe/payments/onetime/";
   try {
     let firstPayment, paymentResult;
@@ -103,9 +106,14 @@ export async function issueBilling(
         amount: 200,
         name: "월간 이용권 결제",
       },
-    }).then((res) => {
-      firstPayment = res;
-    });
+    })
+      .then((res) => {
+        firstPayment = res;
+        console.log(res.data);
+      })
+      .catch((err) => {
+        console.error("Error: ", err);
+      });
 
     await axios({
       url: billingURL,
@@ -119,11 +127,12 @@ export async function issueBilling(
       },
     }).then((res) => {
       paymentResult = res;
+      console.log(res.data);
     });
 
     return { firstPayment, paymentResult };
   } catch (err) {
-    console.error("Error");
+    console.error("Error", err);
   }
 }
 
@@ -145,42 +154,6 @@ export async function normalPayment(
       merchant_uid: merchantUid,
       amount,
       name,
-    },
-  })
-    .then((res) => {
-      console.log(res.data);
-    })
-    .catch((err) => {
-      console.error(err);
-    });
-}
-
-export async function bookedPayment(
-  customerUid: any,
-  merchantUid: any,
-  amount: any,
-  Name: any,
-  buyerEmail: any
-) {
-  const date = new Date();
-  date.setMonth(date.getMonth() + 2);
-  const timeStamp = Math.floor(date.getTime() / 1000);
-  const bookedURL = "https://api.iamport.kr/subscribe/payments/schedule";
-  await axios({
-    url: bookedURL,
-    method: "post",
-    headers: { Authorization: await getToken() },
-    data: {
-      customer_uid: customerUid,
-      schedules: [
-        {
-          merchant_uid: merchantUid,
-          schedule_at: timeStamp,
-          amount: amount,
-          name: Name,
-          buyer_email: buyerEmail,
-        },
-      ],
     },
   })
     .then((res) => {

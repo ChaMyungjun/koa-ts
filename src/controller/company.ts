@@ -17,6 +17,8 @@ export default class CompanyController {
   @request("post", "/company/register")
   @summary("create company info data")
   public static async createCompany(ctx: BaseContext): Promise<void> {
+    // console.log(ctx.request.body);
+
     const companyRepsitory: Repository<Company> = getManager().getRepository(
       Company
     );
@@ -24,15 +26,19 @@ export default class CompanyController {
     const tokenRepository: Repository<Token> = getManager().getRepository(
       Token
     );
-    const gottenToken = ctx.cookies.get("access_token");
+    const gottenToken = ctx.request.body.token;
     const userToBeUpdate = await userRepository.findOne({
       token: await tokenRepository.findOne({ token: gottenToken }),
     });
 
+    // console.log(gottenToken);
+    // console.log(await userRepository.find({ relations: ["token"] }));
+    // console.log(userToBeUpdate);
+
     if (userToBeUpdate) {
       const companyToBeSaved: Company = new Company();
-      
-      companyToBeSaved.companyName = ctx.request.company;
+
+      companyToBeSaved.companyName = ctx.request.body.company;
       companyToBeSaved.name = ctx.request.body.name;
       companyToBeSaved.email = ctx.request.body.email;
       companyToBeSaved.position = ctx.request.body.position;
@@ -59,6 +65,9 @@ export default class CompanyController {
         });
         ctx.status = 201;
       }
+    } else {
+      ctx.status = 200;
+      ctx.body = { failure: "user token doesn't exist" };
     }
   }
 
@@ -89,7 +98,6 @@ export default class CompanyController {
       });
 
       ctx.body = "Modify Success";
-      ctx.redirect("/");
       ctx.status = 201;
     } else {
       ctx.status = 403;

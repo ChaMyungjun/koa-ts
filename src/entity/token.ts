@@ -89,33 +89,42 @@ export function decoded(token: any) {
 export async function naverGenerateToken(state: any, code: any) {
   console.log(state, code);
   const GENERATE_TOKEN_NAVER = `https://nid.naver.com/oauth2.0/token?client_id=${process.env.naver_rest_api}&client_secret=${process.env.naver_secret_key}&grant_type=authorization_code&state=${state}&code=${code}`;
+  let data: any = null;
 
   //nid.naver.com/oauth2.0/token?client_id={클라이언트 아이디}&client_secret={클라이언트 시크릿}&grant_type=authorization_code&state={상태 토큰}&code={인증 코드}
   await axios
-    .get(GENERATE_TOKEN_NAVER)
+    .post(GENERATE_TOKEN_NAVER)
     .then((res) => {
-      console.log(res.data);
-      return res.data;
+      //console.log("res token data", res.data);
+      data = res.data;
     })
     .catch((err) => {
-      console.error("Error:", err.response.data);
+      console.error("Error:", err.data);
     });
+
+  console.log(data);
+  return data;
 }
 
 export async function naverGenerateProfile(access_token: any) {
+  console.log(access_token);
   const GENERATE_PROFILE_NAVER = "https://openapi.naver.com/v1/nid/me";
+  let data: any = null;
 
   await axios
-    .post(GENERATE_PROFILE_NAVER, {
+    .get(GENERATE_PROFILE_NAVER, {
       headers: { Authorization: `Bearer ${access_token}` },
     })
     .then((res) => {
-      console.log(res);
-      return res.data;
+      //console.log("res profile data", res.data);
+      data = res.data;
     })
     .catch((err) => {
       console.error("Error: ", err.response.data);
     });
+  console.log(data);
+
+  return data;
 }
 
 /**

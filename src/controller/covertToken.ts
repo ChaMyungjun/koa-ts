@@ -28,9 +28,6 @@ export default class TokenController {
   public static async getSocialToken(ctx: BaseContext): Promise<void> {
     console.log(ctx.request.body);
     const tokenInfo = ctx.request.body;
-    const access_token = tokenInfo.token;
-    const refresh_token = tokenInfo.refresh_token;
-    const expires_in = 3;
 
     //get a token repository to perform operations with token
     const tokenRepository: Repository<Token> = getManager().getRepository(
@@ -42,30 +39,30 @@ export default class TokenController {
     const tokenToBeSaved: Token = new Token();
     const userToBeSaved: User = new User();
 
-    if (ctx.request.body.backend === "naver") {
+    //social login naver
+    if (tokenInfo.backend === "naver") {
       console.log("naver");
       //validate token entity
       const errors: ValidationError[] = await validate(tokenToBeSaved);
 
-      console.log(ctx.request.body.state, ctx.request.body.code);
       const data: any = await naverGenerateToken(
-        ctx.request.body.state,
-        ctx.request.body.code
+        tokenInfo.state,
+        tokenInfo.code
       );
-      console.log(data);
 
       const access_token = data.access_token;
-      const refresh_token = data?.refresh_token;
-      const expires_in = data?.expires_in;
-      const profile: any = await naverGenerateProfile(data.access_token);
-      console.log(profile);
+      const refresh_token = data.refresh_token;
+      const expires_in = data.expires_in;
 
-      const email = profile.email;
-      const id = profile.id;
+      const profile: any = await naverGenerateProfile(access_token);
+
+      const email = profile.response.email;
+      const id = profile.response.id;
 
       tokenToBeSaved.token = access_token;
       tokenToBeSaved.reToken = refresh_token;
       tokenToBeSaved.expire = expires_in;
+      tokenToBeSaved.tokenProvider = ctx.request.body.backend;
       tokenToBeSaved.Id = id;
 
       userToBeSaved.email = email;
@@ -98,8 +95,9 @@ export default class TokenController {
             console.log("userRepository Remove");
           });
 
+          console.log({ access_token, refresh_token, expires_in });
+          ctx.status = 200;
           ctx.body = { access_token, refresh_token, expires_in };
-          ctx.status = 201;
         } catch (err) {
           console.error("Error!", err);
         }
@@ -107,17 +105,18 @@ export default class TokenController {
         await tokenRepository.save(tokenToBeSaved);
         await userRepository.save(userToBeSaved);
         //console.log({ user, token });
-        ctx.body = { access_token, refresh_token, expires_in };
-        ctx.redirect("/");
+        console.log({ access_token, refresh_token, expires_in });
         ctx.status = 200;
+        ctx.body = { access_token, refresh_token, expires_in };
       }
-
-      ctx.status = 404;
-      ctx.body = { Test: "asdfasdf" };
     }
 
     //validate token entity
     const errors: ValidationError[] = await validate(tokenToBeSaved);
+
+    const access_token = tokenInfo.token;
+    const refresh_token = tokenInfo.refresh_token;
+    const expires_in = tokenInfo.expires_in;
 
     //kakao data info
     tokenToBeSaved.token = access_token;
@@ -154,8 +153,8 @@ export default class TokenController {
           console.log("userRepository Remove");
         });
 
+        ctx.status = 200;
         ctx.body = { access_token, refresh_token, expires_in };
-        ctx.status = 201;
       } catch (err) {
         console.error("Error!", err);
       }
@@ -163,9 +162,8 @@ export default class TokenController {
       await tokenRepository.save(tokenToBeSaved);
       await userRepository.save(userToBeSaved);
       //console.log({ user, token });
-      ctx.body = { access_token, refresh_token, expires_in };
-      ctx.redirect("/");
       ctx.status = 200;
+      ctx.body = { access_token, refresh_token, expires_in };
     }
   }
 }
@@ -199,7 +197,6 @@ export default class TokenController {
         console.error("Error!");
       }
     }
- * 
  * 
  * 
  * 

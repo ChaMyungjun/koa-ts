@@ -25,8 +25,6 @@ import { unprotectedRouter } from "./unprotectedRoutes";
 import { protectedRouter } from "./protectedRoutes";
 import { cron } from "./cron";
 
-import jwtMiddleware from "./lib/jwtMiddleware";
-
 Resource.validate = validate;
 
 // create connection with database
@@ -140,9 +138,6 @@ try {
       // Enable bodyParser with default options
       app.use(bodyParser());
 
-      //jwtMiddle using => social login accessToken valid checking
-      //app.use(jwtMiddleware);
-
       // these routes are NOT protected by the JWT middleware, also include middleware to respond with "Method Not Allowed - 405".
       app
         .use(unprotectedRouter.routes())
@@ -153,21 +148,17 @@ try {
 
       // JWT middleware -> below this line routes are only reached if JWT token is valid, secret as env variable
       // do not protect swagger-json and swagger-html endpoints
-      // app.use(
-      //   jwt({ secret: config.jwtSecret }).unless({ path: [/^\/swagger-/] })
-      // );
-
       //passport initialize setting
       app.use(passport.initialize());
       app.use(passport.session());
 
-      app.use(async (ctx) => {
-        ctx.isAuthenticated();
-        ctx.isUnauthenticated();
-        // await ctx.login();
-        // ctx.logout();
-        // ctx.state.user();
-      });
+      // app.use(async (ctx) => {
+      //   ctx.isAuthenticated();
+      //   ctx.isUnauthenticated();
+      //   // await ctx.login();
+      //   // ctx.logout();
+      //   // ctx.state.user();
+      // });
 
       // Register cron job to do any action needed
       cron.start();
