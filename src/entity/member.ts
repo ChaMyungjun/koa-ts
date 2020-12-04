@@ -15,17 +15,21 @@ import {
 import axios from "axios";
 import { getToken } from "./payment";
 import { User } from "./user";
+import { collect } from "underscore";
 
 @Entity()
 export class Member extends BaseEntity {
   @PrimaryGeneratedColumn()
   index: number;
 
-  @Column({ nullable: true })
-  member: string;
-
   @Column()
   merchantUid: string;
+
+  @Column({ nullable: true })
+  membershipType: string;
+
+  @Column({ nullable: true })
+  email: string;
 
   @Column({ nullable: true })
   status: string;
@@ -39,7 +43,7 @@ export class Member extends BaseEntity {
   @Column({ nullable: true })
   amount: number;
 
-  @Column()
+  @Column({ nullable: true })
   scheduledAt: number;
 
   @CreateDateColumn()
@@ -71,14 +75,15 @@ export async function bookedPayment(
   customerUid: any,
   merchantUid: any,
   amount: any,
-  Name: any
+  Name: any,
+  dateLength: any
 ) {
   let billingData: any = null;
-  console.log(customerUid);
+  console.log(dateLength);
   const date = new Date();
   date.setMonth(date.getMonth() + 1);
   date.setHours(9);
-  //  date.setMinutes();
+  // date.setMinutes();
   const timeStamp = Math.floor(date.getTime() / 1000);
   const bookedURL = "https://api.iamport.kr/subscribe/payments/schedule";
   await axios({

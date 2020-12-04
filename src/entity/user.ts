@@ -18,6 +18,7 @@ import { Company } from "./company";
 import { Payment } from "./payment";
 import { Token } from "./token";
 import { Member } from "./member";
+import { Order } from "./order";
 
 @Entity()
 export class User extends BaseEntity {
@@ -72,6 +73,12 @@ export class User extends BaseEntity {
   })
   @JoinColumn({ name: "member_index" })
   member: Member;
+
+  @OneToOne((type) => Order, (order) => order.index, {
+    nullable: true,
+    onDelete: "SET NULL",
+  })
+  order: Order;
 }
 
 export const userSchema = {

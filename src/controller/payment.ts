@@ -12,6 +12,10 @@ import { Member, meruuid4, bookedPayment } from "../entity/member";
 
 import { Payment, uuidv4, getToken, issueBilling } from "../entity/payment";
 import { Token } from "../entity/token";
+import { Order, searchingPayment } from "../entity/order";
+import { payment } from ".";
+import { find } from "underscore";
+import { ConsoleTransportOptions } from "winston/lib/winston/transports";
 
 @responsesAll(["Payment"])
 export default class PaymentController {
@@ -50,6 +54,7 @@ export default class PaymentController {
       const date = new Date();
       date.setMonth(date.getMonth() + 1);
       date.setHours(9);
+      console.log(date);
 
       //create entity
       //build up entity payment info to be saved
@@ -74,7 +79,7 @@ export default class PaymentController {
       paymentToBeSaved.merchantUid = meruuid_payment;
 
       //membership saving
-      memberToBeSaved.member =
+      memberToBeSaved.membershipType =
         ctx.request.body.membershipType === "1"
           ? "business"
           : ctx.request.body.membershipType === "2"
@@ -105,18 +110,21 @@ export default class PaymentController {
         paymentToBeSaved.merchantUid,
         memberToBeSaved.amount
       ).then(async (res: any) => {
+        console.log(res.firstPay);
         await bookedPayment(
           res.firstPay.response.customer_uid,
-          meruuid_member,
+          memberToBeSaved.merchantUid,
           memberToBeSaved.amount,
-          "월별 예약 결제"
+          "월별 예약 결제",
+          await memberRepository.find()
         ).then((res) => {
           console.log(res.data);
-          console.log(res.data.response[0].merchant_uid);
+          memberToBeSaved.merchantUid = res.data.response[0].merchant_uid;
           memberToBeSaved.scheduledAt = res.data.response[0].schedule_at;
         });
       });
 
+      //errors
       if (errorsPayment.length > 0) {
         //error checking
         ctx.status = 400;
@@ -169,19 +177,122 @@ export default class PaymentController {
     }
   }
 
-  @request("post", "/payment/member/callback")
+  @request("post", "/payment/order")
+  @summary("normal payment")
+  public static async craeteOrder(ctx: BaseContext): Promise<void> {
+    const paymentRepository: Repository<Payment> = getManager().getRepository(
+      Payment
+    );
+    const tokenRepository: Repository<Token> = getManager().getRepository(
+      Token
+    );
+    const userRepository: Repository<User> = getManager().getRepository(User);
+    const orderRepository: Repository<Order> = getManager().getRepository(
+      Order
+    );
+
+    const orderToBeSaved: Order = new Order();
+
+    const meruuid = await meruuid4();
+
+    const gottenToken = ctx.request.body.token;
+    const findUser = await userRepository.findOne({
+      token: await tokenRepository.findOne({ token: gottenToken }),
+    });
+
+    if (findUser) {
+      const data = {
+        member: "normalPayment",
+        merchant_uid: meruuid,
+        product: {
+          title: `${findUser.name}: ????상품명????`,
+        },
+        price: 4500,
+        user: {
+          name: findUser.name,
+          email: findUser.email,
+        },
+      };
+
+      orderToBeSaved.member = data.member;
+      orderToBeSaved.merchantUid = data.merchant_uid;
+      orderToBeSaved.amount = data.price;
+      orderToBeSaved.name = data.user.name;
+      orderToBeSaved.email = data.user.email;
+      orderToBeSaved.orderTitle = data.product.title;
+      orderToBeSaved.status = "결제대기";
+
+      await orderRepository.save(orderToBeSaved);
+
+      ctx.status = 200;
+      ctx.body = { data };
+    } else {
+      console.log(ctx.request.body.token);
+      ctx.status = 201;
+      ctx.body = { error: "token doesn't found" };
+    }
+    /**
+ * 
+            merchant_uid: order.merchant_uid, // 주문번호
+            amount: order.price, // 결제금액
+            name: order.product.title, // 주문명
+            buyer_name: order.user.email, // 구매자 이름
+            buyer_email: order.user.email, // 구매자 이메일
+ * 
+ * 
+ */
+  }
+
+  @request("post", "/payment/order/callback")
+  @summary("normal payment callback")
+  public static async normalPaymentCallback(ctx: BaseContext): Promise<void> {
+    const data = ctx.request.body;
+    const orderRepository: Repository<Order> = getManager().getRepository(
+      Order
+    );
+
+    const findOrder = await orderRepository.findOne({
+      merchantUid: data.merchant_uid,
+    });
+
+    const getPaymentData: any = searchingPayment(data.imp_uid);
+    const paymentData = getPaymentData.data.response;
+    const { amount, status }: any = paymentData;
+
+    if (amount === findOrder.amount) {
+      await orderRepository.update(findOrder.index, {
+        status: paymentData.status,
+      });
+
+      switch (status) {
+        case "ready":
+          ctx.status = 400;
+          ctx.body = { err: "method is not supported" };
+        case "paid":
+          ctx.status = 200;
+          ctx.body = { message: "normal payment success" };
+      }
+    } else {
+      throw { status: "forgery", message: "amount is not matched" };
+    }
+  }
+
+  @request("post", "/payment/callback")
   @summary("payment User Product")
   public static async callbackPayment(ctx: BaseContext): Promise<void> {
     const memberRepository: Repository<Member> = await getManager().getRepository(
       Member
     );
+    const orderRepository: Repository<Order> = await getManager().getRepository(
+      Order
+    );
+
+    const orderToBeSaved: Order = new Order();
 
     const { imp_uid, merchant_uid } = ctx.request.body;
     const access_token = await getToken();
 
     const paymentSearchingURL = `https://api.iamport.kr/payments/${imp_uid}`;
-    const paymentScheduledURL =
-      "https://api.iamport.kr/subscribe/payments/schedule";
     try {
       const getPaymentData: any = await axios({
         url: paymentSearchingURL,
@@ -190,82 +301,81 @@ export default class PaymentController {
       });
 
       const paymentData = getPaymentData.data.response;
-      console.log(paymentData);
+      //console.log(paymentData);
+      const meruuid = await meruuid4();
+      const { status, merchant_uid } = paymentData;
+      const findMember = await memberRepository.findOne({
+        merchantUid: paymentData.merchant_uid,
+      });
+      const findOrder = await orderRepository.findOne({
+        merchantUid: paymentData.merchant_uid,
+      });
+      if (status === "paid") {
+        //merchant_uid compare => scheduled or normal
+        if (findMember) {
+          console.log(findMember);
 
-      if (paymentData.status === "paid") {
-        // const findMember = await memberRepository.findOne({
-        //   merchantUid: paymentData.merchant_uid,
-        // });
-        // console.log(findMember);
+          //console.log(paymentData.merchant_uid);
 
-        console.log(await memberRepository.find());
-        console.log(paymentData.merchant_uid);
+          let resposneBookedData: any = null;
 
-        let resposneBookedData: any = null;
+          orderToBeSaved.orderTitle = paymentData.name;
+          orderToBeSaved.merchantUid = paymentData.merchant_uid;
+          orderToBeSaved.status = paymentData.status;
+          orderToBeSaved.method = paymentData.pay_method;
+          orderToBeSaved.failedReason = paymentData.fail_reason;
+          orderToBeSaved.amount = paymentData.amount;
 
-        //membership scheduled db update
-        // await memberRepository.update(findMember.index, {
-        //   status: paymentData.status,
-        //   method: paymentData.pay_method,
-        //   failedReason: paymentData.fail_reason,
-        // });
+          //membership scheduled db update
+          // await memberRepository.update(findMember.index, {
+          //   status: paymentData.status,
+          //   method: paymentData.pay_method,
+          //   failedReason: paymentData.fail_reason,
+          // });
 
-        await bookedPayment(
-          getPaymentData.customer_uid,
-          getPaymentData.merchant_uid,
-          getPaymentData.amount,
-          getPaymentData.name
-        ).then((res) => {
-          resposneBookedData = res;
-        });
+          await orderRepository.save(orderToBeSaved);
 
-        ctx.status = 200;
-        ctx.body = { resposneBookedData };
+          console.log(paymentData);
+          console.log(meruuid);
+          await await bookedPayment(
+            paymentData.customer_uid,
+            meruuid,
+            paymentData.amount,
+            paymentData.name,
+            await memberRepository.find()
+          ).then(async (res) => {
+            resposneBookedData = res;
+            // const findMember = await memberRepository.findOne({
+            //   merchantUid: res.data.response[0].merchant_uid,
+            // });
 
-        // memberToBeSaved.status = paymentData.status;
-        // memberToBeSaved.method = paymentData.pay_method;
-        // memberToBeSaved.failedReason = paymentData.fail_resason;
+            console.log(meruuid);
+            console.log(resposneBookedData.data);
+
+            ctx.status = 200;
+            ctx.body = "schduled is succeed";
+          });
+          // memberToBeSaved.status = paymentData.status;
+          // memberToBeSaved.method = paymentData.pay_method;
+          // memberToBeSaved.failedReason = paymentData.fail_resason;
+        } else if (findOrder) {
+          console.log(paymentData);
+          ctx.status = 200;
+          ctx.body = { message: "paid is succeed" };
+        } else {
+          console.log(paymentData.merchant_uid);
+          ctx.status = 400;
+          ctx.body = status;
+        }
       } else {
-        console.log("re payment trying");
+        ctx.status = 400;
+        ctx.body = status;
       }
     } catch (err) {
       console.error("Error: ", err);
       ctx.status = 400;
-      ctx.body = { err };
+      ctx.body = err;
     }
-  }
-
-  @request("post", "/payment/normalpayment")
-  @summary("normal payment")
-  public static async normalPayment(ctx: BaseContext): Promise<void> {
-    const normalPaymentRepository: Repository<Payment> = getManager().getRepository(
-      Payment
-    );
-    const tokenRepository: Repository<Token> = getManager().getRepository(
-      Token
-    );
-    const userRepository: Repository<User> = getManager().getRepository(User);
-
-    console.log(await userRepository.find({ relations: ["payment"] }));
-    console.log(await userRepository.find({ relations: ["company"] }));
-    console.log(await userRepository.find({ relations: ["token"] }));
-
-    // let userCustomerUid: any = null
-
-    // normalPayments.map((cur, index) => {
-    //   userCustomerUid = cur.customerUid;
-    // });
-
-    // normal payment required value
-    // console.log(
-    //   await normalPayment(
-    //     await getToken(),
-    //     userCustomerUid,
-    //     "order_monthly_0001",
-    //     200,
-    //     "일반결제 테스트"
-    //   )
-    // );
   }
 }
 
