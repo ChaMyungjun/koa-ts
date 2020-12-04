@@ -247,6 +247,7 @@ export default class PaymentController {
   @summary("normal payment callback")
   public static async normalPaymentCallback(ctx: BaseContext): Promise<void> {
     const data = ctx.request.body;
+    console.log(data);
     const orderRepository: Repository<Order> = getManager().getRepository(
       Order
     );
