@@ -9,17 +9,19 @@ import {
   CreateDateColumn,
   Entity,
   UpdateDateColumn,
+  OneToOne,
 } from "typeorm";
 
 import axios from "axios";
 import { getToken } from "./payment";
+import { User } from "./user";
 
 @Entity()
 export class Member extends BaseEntity {
   @PrimaryGeneratedColumn()
   index: number;
 
-  @Column()
+  @Column({ nullable: true })
   member: string;
 
   @Column()
@@ -38,13 +40,16 @@ export class Member extends BaseEntity {
   amount: number;
 
   @Column()
-  scheduledAt: Date;
+  scheduledAt: number;
 
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @OneToOne((type) => User, (user) => user.member)
+  user: User;
 }
 
 export const Memberschema = {
@@ -69,7 +74,7 @@ export async function bookedPayment(
   Name: any
 ) {
   let billingData: any = null;
-  console.log(customerUid)
+  console.log(customerUid);
   const date = new Date();
   date.setMonth(date.getMonth() + 1);
   date.setHours(9);
@@ -93,7 +98,7 @@ export async function bookedPayment(
     },
   })
     .then((res) => {
-      billingData = res.data;
+      billingData = res;
     })
     .catch((err) => {
       billingData = err.resposne.data;

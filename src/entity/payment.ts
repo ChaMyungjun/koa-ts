@@ -8,9 +8,12 @@ import {
   PrimaryGeneratedColumn,
   BaseEntity,
   CreateDateColumn,
+  OneToMany,
+  OneToOne,
 } from "typeorm";
 import axios from "axios";
 import { access } from "fs";
+import { User } from "./user";
 
 @Entity()
 export class Payment extends BaseEntity {
@@ -38,6 +41,9 @@ export class Payment extends BaseEntity {
   //create Date
   @CreateDateColumn()
   createdAt: Date;
+
+  @OneToOne((type) => User, (user) => user.payment)
+  user: User;
 }
 
 export const Paymentschema = {
@@ -92,7 +98,8 @@ export async function issueBilling(
   cardExpire: any,
   userBirth: any,
   password2digit: any,
-  merchant_uid: any
+  merchant_uid: any,
+  amount: any
 ) {
   const billingURL = `https://api.iamport.kr/subscribe/customers/${customer_uid}`;
   const firstPaymentURL = "https://api.iamport.kr/subscribe/payments/onetime/";
@@ -103,14 +110,16 @@ export async function issueBilling(
   try {
     await axios({
       url: firstPaymentURL,
-      method: "POST", 
+      method: "POST",
       headers: { Authorization: accessToken },
       data: {
         card_number: cardNumber,
         expiry: cardExpire,
         merchant_uid: merchant_uid,
-        amount: 200,
+        amount: amount,
+        birth: userBirth,
         customer_uid: customer_uid,
+        pwd_2digit: password2digit,
         name: "월간 이용권 결제",
       },
     })

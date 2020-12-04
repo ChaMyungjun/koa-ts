@@ -40,44 +40,6 @@ protectedRouter.post("/payment/normal", payment.normalPayment);
 //jwt Middleware
 protectedRouter.post("/jwt/check", jwt.regenerateToken);
 
-// passport.use(
-//   "naver-login",
-//   new naverStrategy(
-//     {
-//       clientID: process.env.naver_rest_api,
-//       clientSecret: process.env.naver_secret_key,
-//       callbackURL: process.env.naver_redirect_url,
-//     },
-//     (accessToken: any, refreshToken: any, profile: any, done: any) => {
-//       naverUser = {
-//         access_token: accessToken,
-//         refresh_token: refreshToken,
-//         profile: profile,
-//         backend: "naver",
-//       };
-//       console.log(profile);
-//     }
-//   )
-// );
-
-// protectedRouter.post(
-//   "/convert/token/naver",
-//   passport.authenticate("naver-login"),
-//   (ctx, next) => {
-//     console.log(naverUser);
-//     ctx.body = naverUser;
-//     ctx.status = 200;
-//   }
-// );
-
-// protectedRouter.post(
-//   "/",
-//   passport.authenticate("naver-login", {
-//     successRedirect: "/",
-//     failureFlash: "/user/login",
-//   })
-// );
-
 // // Swagger endpoint
 protectedRouter.swagger({
   title: "node-typescript-koa-rest",

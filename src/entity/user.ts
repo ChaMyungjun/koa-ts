@@ -17,6 +17,7 @@ import jwt from "jsonwebtoken";
 import { Company } from "./company";
 import { Payment } from "./payment";
 import { Token } from "./token";
+import { Member } from "./member";
 
 @Entity()
 export class User extends BaseEntity {
@@ -48,14 +49,14 @@ export class User extends BaseEntity {
     nullable: true,
     onDelete: "SET NULL",
   })
-  @JoinColumn()
+  @JoinColumn({ name: "company_index" })
   company: Company;
 
   @OneToOne((type) => Payment, (payment) => payment.index, {
     nullable: true,
     onDelete: "SET NULL",
   })
-  @JoinColumn()
+  @JoinColumn({ name: "payment_index" })
   payment: Payment;
 
   @OneToOne((type) => Token, (token) => token.index, {
@@ -64,6 +65,13 @@ export class User extends BaseEntity {
   })
   @JoinColumn({ name: "token_index" })
   token: Token;
+
+  @OneToOne((type) => Member, (member) => member.index, {
+    nullable: true,
+    onDelete: "SET NULL",
+  })
+  @JoinColumn({ name: "member_index" })
+  member: Member;
 }
 
 export const userSchema = {
