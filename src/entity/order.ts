@@ -60,8 +60,8 @@ export class Order extends BaseEntity {
   user: User;
 }
 
-export async function searchingPayment(imp_uid: any) {
-  const getPaymentDataURL = `https://api.iamport.kr/payments/${imp_uid}`;
+export async function searchingPayment(merchant_uid: any) {
+  const getPaymentDataURL = `https://api.iamport.kr/payments/findAll/${merchant_uid}`;
 
   const getPaymentData = await axios({
     url: getPaymentDataURL,

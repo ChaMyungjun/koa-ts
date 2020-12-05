@@ -258,8 +258,8 @@ export default class PaymentController {
 
     console.log(findOrder);
 
-    const getPaymentData: any = searchingPayment(data.imp_uid);
-    const paymentData = getPaymentData.data.response;
+    const getPaymentData: any = searchingPayment(data.merchant_uid);
+    const paymentData = getPaymentData.data.response[0].list;
     const { amount, status }: any = paymentData;
 
     if (amount === findOrder.amount) {
