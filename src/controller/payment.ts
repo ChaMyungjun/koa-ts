@@ -256,6 +256,8 @@ export default class PaymentController {
       merchantUid: data.merchant_uid,
     });
 
+    console.log(findOrder);
+
     const getPaymentData: any = searchingPayment(data.imp_uid);
     const paymentData = getPaymentData.data.response;
     const { amount, status }: any = paymentData;
@@ -274,7 +276,8 @@ export default class PaymentController {
           ctx.body = { message: "normal payment success" };
       }
     } else {
-      throw { status: "forgery", message: "amount is not matched" };
+      ctx.status = 400;
+      ctx.body = { error: "amount is forgery" };
     }
   }
 
