@@ -100,6 +100,7 @@ export default class PaymentController {
 
       console.log(expires_in);
 
+      //pay
       await issueBilling(
         customerUUID,
         await getToken(),
@@ -111,6 +112,7 @@ export default class PaymentController {
         memberToBeSaved.amount
       ).then(async (res: any) => {
         console.log(res.firstPay);
+        //scheduled
         await bookedPayment(
           res.firstPay.response.customer_uid,
           memberToBeSaved.merchantUid,
@@ -305,15 +307,17 @@ export default class PaymentController {
       });
 
       const paymentData = getPaymentData.data.response;
+      const { status, merchant_uid } = paymentData;
       //console.log(paymentData);
       const meruuid = await meruuid4();
-      const { status, merchant_uid } = paymentData;
+
       const findMember = await memberRepository.findOne({
         merchantUid: paymentData.merchant_uid,
       });
       const findOrder = await orderRepository.findOne({
         merchantUid: paymentData.merchant_uid,
       });
+
       if (status === "paid") {
         //merchant_uid compare => scheduled or normal
         if (findMember) {
@@ -323,7 +327,11 @@ export default class PaymentController {
 
           let resposneBookedData: any = null;
 
+          //payment value saving
           orderToBeSaved.orderTitle = paymentData.name;
+          orderToBeSaved.member = "membership scheduled payment";
+          orderToBeSaved.name = paymentData.buyer_name;
+          orderToBeSaved.email = paymentData.buyer_email;
           orderToBeSaved.merchantUid = paymentData.merchant_uid;
           orderToBeSaved.status = paymentData.status;
           orderToBeSaved.method = paymentData.pay_method;
@@ -331,16 +339,14 @@ export default class PaymentController {
           orderToBeSaved.amount = paymentData.amount;
 
           //membership scheduled db update
-          // await memberRepository.update(findMember.index, {
-          //   status: paymentData.status,
-          //   method: paymentData.pay_method,
-          //   failedReason: paymentData.fail_reason,
-          // });
+          await memberRepository.update(findMember.index, {
+            status: paymentData.status,
+            method: paymentData.pay_method,
+            failedReason: paymentData.fail_reason,
+          });
 
           await orderRepository.save(orderToBeSaved);
 
-          console.log(paymentData);
-          console.log(meruuid);
           await await bookedPayment(
             paymentData.customer_uid,
             meruuid,

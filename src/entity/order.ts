@@ -55,9 +55,6 @@ export class Order extends BaseEntity {
 
   @UpdateDateColumn()
   updatedAt: Date;
-
-  @OneToOne((type) => User, (user) => user.order)
-  user: User;
 }
 
 export async function searchingPayment(merchant_uid: any) {
