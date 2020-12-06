@@ -320,6 +320,8 @@ export default class PaymentController {
 
       if (status === "paid") {
         //merchant_uid compare => scheduled or normal
+
+        //scheduled payment
         if (findMember) {
           console.log(findMember);
 
@@ -368,15 +370,21 @@ export default class PaymentController {
           // memberToBeSaved.status = paymentData.status;
           // memberToBeSaved.method = paymentData.pay_method;
           // memberToBeSaved.failedReason = paymentData.fail_resason;
+
+          //normal payment
         } else if (findOrder) {
           console.log(paymentData);
           ctx.status = 200;
           ctx.body = { message: "paid is succeed" };
+
+          //not noram & payment
         } else {
           console.log(paymentData.merchant_uid);
           ctx.status = 400;
           ctx.body = status;
         }
+
+        //payment failed
       } else {
         ctx.status = 400;
         ctx.body = status;
