@@ -22,7 +22,7 @@ export class Admin extends BaseEntity {
   password: string;
 }
 
-export const userSchema = {
+export const adminSchema = {
   id: { type: "number", required: true, example: 1 },
   name: { type: "string", required: false, example: "Javier" },
   email: {

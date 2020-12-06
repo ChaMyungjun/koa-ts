@@ -13,9 +13,6 @@ import { Member, meruuid4, bookedPayment } from "../entity/member";
 import { Payment, uuidv4, getToken, issueBilling } from "../entity/payment";
 import { Token } from "../entity/token";
 import { Order, searchingPayment } from "../entity/order";
-import { payment } from ".";
-import { find } from "underscore";
-import { ConsoleTransportOptions } from "winston/lib/winston/transports";
 
 @responsesAll(["Payment"])
 export default class PaymentController {
