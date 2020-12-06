@@ -5,7 +5,6 @@
  */
 
 import { Entity, Column, BaseEntity, PrimaryGeneratedColumn } from "typeorm";
-import { ColumnMetadata } from "typeorm/metadata/ColumnMetadata";
 
 @Entity()
 export class Music extends BaseEntity {
