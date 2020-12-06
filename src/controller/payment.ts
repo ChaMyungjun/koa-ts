@@ -87,8 +87,6 @@ export default class PaymentController {
       memberToBeSaved.amount =
         ctx.request.body.membershipType === "1" ? 30000 : null;
 
-      memberToBeSaved.merchantUid = meruuid_member;
-
       //customer uuid
       const customerUUID = paymentToBeSaved.customerUid;
 
@@ -343,7 +341,6 @@ export default class PaymentController {
             status: paymentData.status,
             method: paymentData.pay_method,
             failedReason: paymentData.fail_reason,
-            merchantUid: meruuid,
           });
 
           //saving scheduled payment
@@ -365,6 +362,7 @@ export default class PaymentController {
             resposneBookedData = res;
             const findMember = await memberRepository.findOne({
               merchantUid: res.data.response[0].merchant_uid,
+              scheduledAt: res.data.response[0].schedule_at,
             });
 
             console.log(meruuid);
