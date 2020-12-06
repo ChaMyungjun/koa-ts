@@ -308,6 +308,7 @@ export default class PaymentController {
       //console.log(paymentData);
       const meruuid = await meruuid4();
 
+      const findMemberSchuduledDate = await memberRepository.find();
       const findMember = await memberRepository.findOne({
         merchantUid: paymentData.merchant_uid,
       });
@@ -344,8 +345,15 @@ export default class PaymentController {
             failedReason: paymentData.fail_reason,
           });
 
+          //saving scheduled payment
           await orderRepository.save(orderToBeSaved);
 
+          //setTimeout schedule date time
+          findMemberSchuduledDate.map((cur, index) => {
+            console.log("Member schedule date: ", cur);
+          });
+
+          //scheduled
           await await bookedPayment(
             paymentData.customer_uid,
             meruuid,
@@ -354,15 +362,15 @@ export default class PaymentController {
             await memberRepository.find()
           ).then(async (res) => {
             resposneBookedData = res;
-            // const findMember = await memberRepository.findOne({
-            //   merchantUid: res.data.response[0].merchant_uid,
-            // });
+            const findMember = await memberRepository.findOne({
+              merchantUid: res.data.response[0].merchant_uid,
+            });
 
             console.log(meruuid);
             console.log(resposneBookedData.data);
 
             ctx.status = 200;
-            ctx.body = "schduled is succeed";
+            ctx.body = { message: "schduled is succeed" };
           });
           // memberToBeSaved.status = paymentData.status;
           // memberToBeSaved.method = paymentData.pay_method;
