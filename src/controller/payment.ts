@@ -310,10 +310,10 @@ export default class PaymentController {
 
       const findMemberSchuduledDate = await memberRepository.find();
       const findMember = await memberRepository.findOne({
-        merchantUid: paymentData.merchant_uid,
+        merchantUid: merchant_uid,
       });
       const findOrder = await orderRepository.findOne({
-        merchantUid: paymentData.merchant_uid,
+        merchantUid: merchant_uid,
       });
 
       if (status === "paid") {
@@ -343,6 +343,7 @@ export default class PaymentController {
             status: paymentData.status,
             method: paymentData.pay_method,
             failedReason: paymentData.fail_reason,
+            merchantUid: meruuid,
           });
 
           //saving scheduled payment
@@ -379,6 +380,21 @@ export default class PaymentController {
           //normal payment
         } else if (findOrder) {
           console.log(paymentData);
+
+          //payment value saving
+          orderToBeSaved.orderTitle = paymentData.name;
+          orderToBeSaved.member = "normal payment";
+          orderToBeSaved.name = paymentData.buyer_name;
+          orderToBeSaved.email = paymentData.buyer_email;
+          orderToBeSaved.merchantUid = paymentData.merchant_uid;
+          orderToBeSaved.status = paymentData.status;
+          orderToBeSaved.method = paymentData.pay_method;
+          orderToBeSaved.failedReason = paymentData.fail_reason;
+          orderToBeSaved.amount = paymentData.amount;
+
+          //saving scheduled payment
+          await orderRepository.save(orderToBeSaved);
+
           ctx.status = 200;
           ctx.body = { message: "paid is succeed" };
 
