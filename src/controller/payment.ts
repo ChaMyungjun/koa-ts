@@ -13,6 +13,7 @@ import { Member, meruuid4, bookedPayment } from "../entity/member";
 import { Payment, uuidv4, getToken, issueBilling } from "../entity/payment";
 import { Token } from "../entity/token";
 import { Order, searchingPayment } from "../entity/order";
+import { Music } from "../entity/music";
 
 @responsesAll(["Payment"])
 export default class PaymentController {
@@ -87,39 +88,7 @@ export default class PaymentController {
       memberToBeSaved.amount =
         ctx.request.body.membershipType === "1" ? 30000 : null;
 
-      //customer uuid
-      const customerUUID = paymentToBeSaved.customerUid;
-
-      //expires custom
-      const expires_in = "20" + ctx.request.body.expire;
-
-      console.log(expires_in);
-
-      //pay
-      await issueBilling(
-        customerUUID,
-        await getToken(),
-        ctx.request.body.cardNum,
-        expires_in,
-        ctx.request.body.birth,
-        ctx.request.body.password,
-        paymentToBeSaved.merchantUid,
-        memberToBeSaved.amount
-      ).then(async (res: any) => {
-        console.log(res.firstPay);
-        //scheduled
-        await bookedPayment(
-          res.firstPay.response.customer_uid,
-          memberToBeSaved.merchantUid,
-          memberToBeSaved.amount,
-          "월별 예약 결제",
-          await memberRepository.find()
-        ).then((res) => {
-          console.log(res.data);
-          memberToBeSaved.merchantUid = res.data.response[0].merchant_uid;
-          memberToBeSaved.scheduledAt = res.data.response[0].schedule_at;
-        });
-      });
+      memberToBeSaved.merchantUid = meruuid_member;
 
       //errors
       if (errorsPayment.length > 0) {
@@ -137,6 +106,31 @@ export default class PaymentController {
         const uuid: any = await uuidv4();
         paymentToBeSaved.customerUid = uuid;
 
+        await issueBilling(
+          paymentToBeSaved.customerUid,
+          await getToken(),
+          ctx.request.body.cardNum,
+          "20" + ctx.request.body.expire,
+          ctx.request.body.birth,
+          ctx.request.body.password,
+          paymentToBeSaved.merchantUid,
+          memberToBeSaved.amount
+        ).then(async (res: any) => {
+          console.log(res.firstPay);
+          //scheduled
+          await bookedPayment(
+            res.firstPay.response.customer_uid,
+            memberToBeSaved.merchantUid,
+            memberToBeSaved.amount,
+            memberToBeSaved.membershipType,
+            await memberRepository.find()
+          ).then((res) => {
+            console.log(res.data);
+            memberToBeSaved.merchantUid = res.data.response[0].merchant_uid;
+            memberToBeSaved.scheduledAt = new Date();
+          });
+        });
+
         await memberRepository.save(memberToBeSaved);
         await paymentRepository.save(paymentToBeSaved);
         await userRepository.update(userToBeUpdate.index, {
@@ -149,6 +143,31 @@ export default class PaymentController {
         const meruuid = await meruuid4();
         memberToBeSaved.merchantUid = meruuid;
 
+        await issueBilling(
+          paymentToBeSaved.customerUid,
+          await getToken(),
+          ctx.request.body.cardNum,
+          "20" + ctx.request.body.expire,
+          ctx.request.body.birth,
+          ctx.request.body.password,
+          paymentToBeSaved.merchantUid,
+          memberToBeSaved.amount
+        ).then(async (res: any) => {
+          console.log(res.firstPay);
+          //scheduled
+          await bookedPayment(
+            res.firstPay.response.customer_uid,
+            memberToBeSaved.merchantUid,
+            memberToBeSaved.amount,
+            memberToBeSaved.membershipType,
+            await memberRepository.find()
+          ).then((res) => {
+            console.log(res.data);
+            memberToBeSaved.merchantUid = res.data.response[0].merchant_uid;
+            memberToBeSaved.scheduledAt = new Date();
+          });
+        });
+
         await memberRepository.save(memberToBeSaved);
         await paymentRepository.save(paymentToBeSaved);
         await userRepository.update(userToBeUpdate.index, {
@@ -157,6 +176,33 @@ export default class PaymentController {
         });
         ctx.status = 200;
       } else {
+        //pay
+        await issueBilling(
+          paymentToBeSaved.customerUid,
+          await getToken(),
+          ctx.request.body.cardNum,
+          "20" + ctx.request.body.expire,
+          ctx.request.body.birth,
+          ctx.request.body.password,
+          paymentToBeSaved.merchantUid,
+          memberToBeSaved.amount
+        ).then(async (res: any) => {
+          console.log(res.firstPay);
+          //scheduled
+          await bookedPayment(
+            res.firstPay.response.customer_uid,
+            memberToBeSaved.merchantUid,
+            memberToBeSaved.amount,
+            memberToBeSaved.membershipType,
+            await memberRepository.find()
+          ).then((res) => {
+            console.log(res.data);
+            memberToBeSaved.merchantUid = res.data.response[0].merchant_uid;
+            memberToBeSaved.scheduledAt = new Date();
+            // memberToBeSaved.scheduledAt = res.data.response[0].schedule_at;
+          });
+        });
+
         const payment = await paymentRepository.save(paymentToBeSaved);
         const member = await memberRepository.save(memberToBeSaved);
         const user = await userRepository.update(userToBeUpdate.index, {
@@ -177,9 +223,10 @@ export default class PaymentController {
   @request("post", "/payment/order")
   @summary("normal payment")
   public static async craeteOrder(ctx: BaseContext): Promise<void> {
-    const paymentRepository: Repository<Payment> = getManager().getRepository(
-      Payment
-    );
+    console.log(ctx.request.body);
+    // const paymentRepository: Repository<Payment> = getManager().getRepository(
+    //   Payment
+    // );
     const tokenRepository: Repository<Token> = getManager().getRepository(
       Token
     );
@@ -187,24 +234,39 @@ export default class PaymentController {
     const orderRepository: Repository<Order> = getManager().getRepository(
       Order
     );
+    const musicRepository: Repository<Music> = getManager().getRepository(
+      Music
+    );
 
     const orderToBeSaved: Order = new Order();
 
     const meruuid = await meruuid4();
 
     const gottenToken = ctx.request.body.token;
+    const gottenProduct = ctx.request.body.product;
+
     const findUser = await userRepository.findOne({
       token: await tokenRepository.findOne({ token: gottenToken }),
     });
+
+    let title: any = null;
+    let price: any = null;
+
+    gottenProduct.map((cur: any, index: any) => {
+      title = cur.name;
+      price += cur.price;
+    });
+
+    console.log(title, price);
 
     if (findUser) {
       const data = {
         member: "normalPayment",
         merchant_uid: meruuid,
         product: {
-          title: `${findUser.name}: ????상품명????`,
+          title: title,
         },
-        price: 4500,
+        price: price,
         user: {
           name: findUser.name,
           email: findUser.email,
@@ -225,9 +287,10 @@ export default class PaymentController {
       ctx.body = { data };
     } else {
       console.log(ctx.request.body.token);
-      ctx.status = 201;
+      ctx.status = 403;
       ctx.body = { error: "token doesn't found" };
     }
+
     /**
  * 
             merchant_uid: order.merchant_uid, // 주문번호
@@ -260,17 +323,24 @@ export default class PaymentController {
     const { amount, status }: any = paymentData;
 
     if (amount === findOrder.amount) {
-      await orderRepository.update(findOrder.index, {
-        status: paymentData.status,
-      });
-
       switch (status) {
         case "ready":
           ctx.status = 400;
           ctx.body = { err: "method is not supported" };
         case "paid":
+          await orderRepository.update(findOrder.index, {
+            status: "결제 성공",
+          });
+
           ctx.status = 200;
           ctx.body = { message: "normal payment success" };
+        default:
+          await orderRepository.update(findOrder.index, {
+            status: "결제 실패",
+          });
+
+          ctx.status = 400;
+          ctx.body = { message: "normal payment failed" };
       }
     } else {
       ctx.status = 400;
@@ -306,7 +376,6 @@ export default class PaymentController {
       //console.log(paymentData);
       const meruuid = await meruuid4();
 
-      const findMemberSchuduledDate = await memberRepository.find();
       const findMember = await memberRepository.findOne({
         merchantUid: merchant_uid,
       });
@@ -338,18 +407,13 @@ export default class PaymentController {
 
           //membership scheduled db update
           await memberRepository.update(findMember.index, {
-            status: paymentData.status,
+            status: paymentData.status === "paid" ? "결제완료" : "결제실패",
             method: paymentData.pay_method,
             failedReason: paymentData.fail_reason,
           });
 
           //saving scheduled payment
           await orderRepository.save(orderToBeSaved);
-
-          //setTimeout schedule date time
-          findMemberSchuduledDate.map((cur, index) => {
-            console.log("Member schedule date: ", cur);
-          });
 
           //scheduled
           await await bookedPayment(
@@ -360,13 +424,16 @@ export default class PaymentController {
             await memberRepository.find()
           ).then(async (res) => {
             resposneBookedData = res;
-            const findMember = await memberRepository.findOne({
-              merchantUid: res.data.response[0].merchant_uid,
-              scheduledAt: res.data.response[0].schedule_at,
-            });
 
             console.log(meruuid);
             console.log(resposneBookedData.data);
+
+            const findMember = await memberRepository.findOne({
+              merchantUid: res.data.response[0].merchant_uid,
+              scheduledAt: new Date(),
+            });
+
+            console.log(findMember);
 
             ctx.status = 200;
             ctx.body = { message: "schduled is succeed" };

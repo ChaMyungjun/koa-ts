@@ -25,6 +25,8 @@ import { unprotectedRouter } from "./unprotectedRoutes";
 import { protectedRouter } from "./protectedRoutes";
 import { cron } from "./cron";
 import { Member } from "./entity/member";
+import { Music } from "./entity/music";
+import { Order } from "./entity/order";
 
 Resource.validate = validate;
 
@@ -107,6 +109,22 @@ try {
             options: {
               parent: {
                 name: "Supertiend Member",
+              },
+            },
+          },
+          {
+            resource: Music,
+            options: {
+              parent: {
+                name: "Supertiend Music",
+              },
+            },
+          },
+          {
+            resource: Order,
+            options: {
+              parent: {
+                name: "Supertiend Order",
               },
             },
           },

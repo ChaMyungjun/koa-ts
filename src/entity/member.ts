@@ -44,7 +44,7 @@ export class Member extends BaseEntity {
   amount: number;
 
   @Column({ nullable: true })
-  scheduledAt: number;
+  scheduledAt: Date;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -85,6 +85,7 @@ export async function bookedPayment(
   date.setHours(9);
   // date.setMinutes();
   const timeStamp = Math.floor(date.getTime() / 1000);
+  
   const bookedURL = "https://api.iamport.kr/subscribe/payments/schedule";
   await axios({
     url: bookedURL,
