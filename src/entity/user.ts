@@ -10,6 +10,7 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from "typeorm";
 import { Length, IsEmail } from "class-validator";
 import crypto from "crypto";
@@ -19,7 +20,7 @@ import { Company } from "./company";
 import { Payment } from "./payment";
 import { Token } from "./token";
 import { Member } from "./member";
-import { Order } from "./order";
+import { Folder } from "./folder";
 
 @Entity()
 export class User extends BaseEntity {
@@ -78,6 +79,9 @@ export class User extends BaseEntity {
   })
   @JoinColumn({ name: "member_index" })
   member: Member;
+
+  @OneToMany((type) => Folder, (folder) => folder.user)
+  folder: Folder[];
 }
 
 export const userSchema = {

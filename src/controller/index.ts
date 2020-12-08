@@ -3,4 +3,6 @@ export { default as general } from "./general";
 export { default as company } from "./company";
 export { default as payment } from "./payment";
 export { default as token } from "./covertToken";
+export { default as music } from "./music";
+export { default as folder } from "./folder";
 export { default as jwt } from "./jwt";

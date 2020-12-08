@@ -26,8 +26,17 @@ export class Music extends BaseEntity {
   @Column()
   genre: string;
 
+  @Column({ nullable: true })
+  time: string;
+
   @Column()
   price: number;
+
+  @Column({ nullable: true })
+  errorText: string;
+
+  @Column({ nullable: true })
+  url: "";
 }
 
 export const musicSchema = {

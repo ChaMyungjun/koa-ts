@@ -253,7 +253,7 @@ export default class PaymentController {
     let price: any = null;
 
     gottenProduct.map((cur: any, index: any) => {
-      title = cur.name;
+      title += cur.name;
       price += cur.price;
     });
 
@@ -312,14 +312,15 @@ export default class PaymentController {
       Order
     );
 
+    const getPaymentData: any = await searchingPayment(data.merchant_uid);
+    console.log(getPaymentData);
+    const paymentData = getPaymentData.data.response.list[0];
     const findOrder = await orderRepository.findOne({
-      merchantUid: data.merchant_uid,
+      merchantUid: paymentData.merchant_uid,
     });
-
+    console.log(paymentData);
     console.log(findOrder);
 
-    const getPaymentData: any = searchingPayment(data.merchant_uid);
-    const paymentData = getPaymentData.data.response[0].list;
     const { amount, status }: any = paymentData;
 
     if (amount === findOrder.amount) {
@@ -327,6 +328,7 @@ export default class PaymentController {
         case "ready":
           ctx.status = 400;
           ctx.body = { err: "method is not supported" };
+          break;
         case "paid":
           await orderRepository.update(findOrder.index, {
             status: "결제 성공",
@@ -334,13 +336,12 @@ export default class PaymentController {
 
           ctx.status = 200;
           ctx.body = { message: "normal payment success" };
+          break;
         default:
           await orderRepository.update(findOrder.index, {
             status: "결제 실패",
           });
-
-          ctx.status = 400;
-          ctx.body = { message: "normal payment failed" };
+          break;
       }
     } else {
       ctx.status = 400;

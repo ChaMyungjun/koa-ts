@@ -3,7 +3,15 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { SwaggerRouter } from "koa-swagger-decorator";
-import { user, company, payment, token, jwt } from "./controller";
+import {
+  user,
+  company,
+  payment,
+  token,
+  jwt,
+  music,
+  folder,
+} from "./controller";
 
 const protectedRouter = new SwaggerRouter();
 
@@ -39,6 +47,15 @@ protectedRouter.post("/payment/order/create", payment.craeteOrder);
 
 //searching normal payment
 protectedRouter.post("/payment/order/callback", payment.normalPaymentCallback);
+
+//music find
+protectedRouter.post("/music/find", music.gettingMusicInfo);
+
+//music collecction
+// protectedRouter.post()
+
+//folder create
+protectedRouter.post("/folder/create", folder.createFolder);
 
 //jwt Middleware
 protectedRouter.post("/jwt/check", jwt.regenerateToken);

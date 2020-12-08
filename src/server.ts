@@ -27,6 +27,8 @@ import { cron } from "./cron";
 import { Member } from "./entity/member";
 import { Music } from "./entity/music";
 import { Order } from "./entity/order";
+import { Collection } from "./entity/collection";
+import { Folder } from "./entity/folder";
 
 Resource.validate = validate;
 
@@ -59,9 +61,30 @@ try {
       const canModifyUsers = ({ currentAdmin }: any) =>
         currentAdmin && currentAdmin.role === "admin";
 
+      const UserNavigation = {
+        name: "User",
+        icon: "Accessibility",
+      };
+
+      const PaymentNavigation = {
+        name: "Payment",
+        icon: "Accessibility",
+      };
+
+      const MusicNavigation = {
+        name: "Music",
+        icon: "Accessibility",
+      };
+
       AdminBro.registerAdapter({ Database, Resource });
       //adminBro create
       const adminBro = new AdminBro({
+        // dashboard: {
+        //   handler: async () => {
+        //     return { some: "output" };
+        //   },
+        //   component: AdminBro.bundle("./my-dashboard-component"),
+        // },
         resources: [
           {
             resource: User,
@@ -69,6 +92,7 @@ try {
               parent: {
                 name: "Superintend User",
               },
+              navigation: UserNavigation,
             },
             actions: {
               new: {
@@ -86,14 +110,7 @@ try {
               parent: {
                 name: "Superitend User Token",
               },
-            },
-          },
-          {
-            resource: Payment,
-            options: {
-              parent: {
-                name: "Superitend User Payment",
-              },
+              navigation: UserNavigation,
             },
           },
           {
@@ -102,6 +119,16 @@ try {
               parent: {
                 name: "Superitend Company",
               },
+              navigation: UserNavigation,
+            },
+          },
+          {
+            resource: Payment,
+            options: {
+              parent: {
+                name: "Superitend User Payment",
+              },
+              navigation: PaymentNavigation,
             },
           },
           {
@@ -110,14 +137,7 @@ try {
               parent: {
                 name: "Supertiend Member",
               },
-            },
-          },
-          {
-            resource: Music,
-            options: {
-              parent: {
-                name: "Supertiend Music",
-              },
+              navigation: PaymentNavigation,
             },
           },
           {
@@ -126,6 +146,34 @@ try {
               parent: {
                 name: "Supertiend Order",
               },
+              navigation: PaymentNavigation,
+            },
+          },
+          {
+            resource: Music,
+            options: {
+              parent: {
+                name: "Supertiend Music",
+              },
+              navigation: MusicNavigation,
+            },
+          },
+          {
+            resource: Collection,
+            options: {
+              parent: {
+                name: "Superitend Collection",
+              },
+              navigation: MusicNavigation,
+            },
+          },
+          {
+            resource: Folder,
+            options: {
+              parent: {
+                name: "Superitend Folder",
+              },
+              navigation: MusicNavigation,
             },
           },
         ],
