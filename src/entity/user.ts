@@ -21,6 +21,7 @@ import { Payment } from "./payment";
 import { Token } from "./token";
 import { Member } from "./member";
 import { Folder } from "./folder";
+import { Order } from "./order";
 
 @Entity()
 export class User extends BaseEntity {
@@ -80,7 +81,21 @@ export class User extends BaseEntity {
   @JoinColumn({ name: "member_index" })
   member: Member;
 
-  @OneToMany((type) => Folder, (folder) => folder.user)
+  @OneToMany((type) => Order, (order) => order.user, {
+    nullable: true,
+    onDelete: "SET NULL",
+  })
+  @JoinColumn({ name: "order_index" })
+  order: Order[];
+
+  @Column({nullable: true})
+  orderIndex: number;
+
+  @OneToMany((type) => Folder, (folder) => folder.user, {
+    nullable: true,
+    onDelete: "SET NULL",
+  })
+  @JoinColumn({ name: "folder_index" })
   folder: Folder[];
 }
 

@@ -58,6 +58,7 @@ export default class TokenController {
 
       const email = profile.response.email;
       const id = profile.response.id;
+      const name = profile.response.nickname;
 
       tokenToBeSaved.token = access_token;
       tokenToBeSaved.reToken = refresh_token;
@@ -66,6 +67,7 @@ export default class TokenController {
       tokenToBeSaved.Id = id;
 
       userToBeSaved.email = email;
+      userToBeSaved.name = name;
       userToBeSaved.token = tokenToBeSaved;
 
       if (errors.length > 0) {
@@ -95,9 +97,11 @@ export default class TokenController {
             console.log("userRepository Remove");
           });
 
-          console.log({ access_token, refresh_token, expires_in });
+          console.log({ access_token, refresh_token, expires_in, name });
+          console.log("{ access_token, refresh_token, expires_in }");
           ctx.status = 200;
-          ctx.body = { access_token, refresh_token, expires_in };
+          // ctx.body = { message: "asasdfasdf" };
+          ctx.body = { access_token, refresh_token, expires_in, name };
         } catch (err) {
           console.error("Error!", err);
         }
@@ -105,10 +109,11 @@ export default class TokenController {
         await tokenRepository.save(tokenToBeSaved);
         await userRepository.save(userToBeSaved);
         //console.log({ user, token });
-        console.log({ access_token, refresh_token, expires_in });
+        console.log({ access_token, refresh_token, expires_in, name });
         ctx.status = 200;
-        ctx.body = { access_token, refresh_token, expires_in };
+        ctx.body = { access_token, refresh_token, expires_in, name };
       }
+      return;
     }
 
     //validate token entity
@@ -126,6 +131,7 @@ export default class TokenController {
     tokenToBeSaved.expire = tokenInfo.expires_in;
 
     userToBeSaved.email = tokenInfo.email;
+    userToBeSaved.name = tokenInfo.name;
     userToBeSaved.token = tokenToBeSaved;
 
     if (errors.length > 0) {

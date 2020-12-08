@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/camelcase */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -220,7 +221,7 @@ export default class PaymentController {
     }
   }
 
-  @request("post", "/payment/order")
+  @request("post", "/payment/order/create")
   @summary("normal payment")
   public static async craeteOrder(ctx: BaseContext): Promise<void> {
     console.log(ctx.request.body);
@@ -238,8 +239,6 @@ export default class PaymentController {
       Music
     );
 
-    const orderToBeSaved: Order = new Order();
-
     const meruuid = await meruuid4();
 
     const gottenToken = ctx.request.body.token;
@@ -249,42 +248,81 @@ export default class PaymentController {
       token: await tokenRepository.findOne({ token: gottenToken }),
     });
 
-    let title: any = null;
-    let price: any = null;
-
-    gottenProduct.map((cur: any, index: any) => {
-      title += cur.name;
-      price += cur.price;
-    });
-
-    console.log(title, price);
-
     if (findUser) {
-      const data = {
-        member: "normalPayment",
-        merchant_uid: meruuid,
-        product: {
-          title: title,
-        },
-        price: price,
+      let data: any = {
         user: {
           name: findUser.name,
           email: findUser.email,
         },
+        product: {
+          title: "음악구매",
+        },
+        merchant_uid: meruuid,
+        amount: null,
       };
 
-      orderToBeSaved.member = data.member;
-      orderToBeSaved.merchantUid = data.merchant_uid;
-      orderToBeSaved.amount = data.price;
-      orderToBeSaved.name = data.user.name;
-      orderToBeSaved.email = data.user.email;
-      orderToBeSaved.orderTitle = data.product.title;
-      orderToBeSaved.status = "결제대기";
+      await Promise.all(
+        gottenProduct.map(async (cur: any, index: any) => {
+          //data
+          const orderData: any = {
+            id: null,
+            member: "일반 결제",
+            merchantUid: meruuid,
+            amount: null,
+            name: findUser.name,
+            email: findUser.email,
+            orderTitle: null,
+            status: "결제대기",
+          };
 
-      await orderRepository.save(orderToBeSaved);
+          //music data
+          const getMusicData = await musicRepository.findOne({ index: cur.id });
 
-      ctx.status = 200;
-      ctx.body = { data };
+          //order data
+          orderData.id = cur.id; // cur.id = 2, 1
+          orderData.amount = getMusicData.price;
+          orderData.orderTitle = getMusicData.name;
+
+          data.amount += getMusicData.price;
+
+          const errors: ValidationError[] = await validate(orderData);
+
+          if (errors.length > 0) {
+            ctx.status = 400;
+            ctx.body = { error: errors };
+          } else if (
+            await orderRepository.findOne({
+              merchantUid: orderData.merchantUid,
+            })
+          ) {
+            ctx.status = 400;
+            ctx.body = { error: "이미 결제된 상품입니다." };
+          } else {
+            await orderRepository.save(orderData);
+            // await userRepository.update(findUser.index, {
+            //   order: [data],
+            // });
+
+            console.log(data);
+
+            ctx.status = 200;
+            ctx.body = { data };
+          }
+          // return data;
+        })
+      );
+
+      //      console.log("getMusicData: ", data);
+
+      //console.log(data);
+
+      // orderToBeSaved.member = data.member;
+      // orderToBeSaved.merchantUid = data.merchant_uid;
+      // orderToBeSaved.amount = data.price;
+      // orderToBeSaved.name = data.user.name;
+      // orderToBeSaved.email = data.user.email;
+      // orderToBeSaved.orderTitle = data.product.title;
+      // orderToBeSaved.status = "결제대기";
     } else {
       console.log(ctx.request.body.token);
       ctx.status = 403;
@@ -311,16 +349,23 @@ export default class PaymentController {
     const orderRepository: Repository<Order> = getManager().getRepository(
       Order
     );
+    const userRepository: Repository<User> = getManager().getRepository(User);
 
     //payed amount
     const getPaymentData: any = await searchingPayment(data);
     console.log(getPaymentData);
     const paymentData = getPaymentData.data.response.list[0];
 
+    console.log("paymentData");
+
     //payment amount
     const findOrder = await orderRepository.findOne({
       merchantUid: paymentData.merchant_uid,
     });
+
+    console.log("paymentData34");
+
+    console.log("paymentData55");
 
     console.log(paymentData);
     console.log(findOrder);
@@ -363,6 +408,9 @@ export default class PaymentController {
     const orderRepository: Repository<Order> = await getManager().getRepository(
       Order
     );
+    const userRepository: Repository<User> = await getManager().getRepository(
+      User
+    );
 
     const orderToBeSaved: Order = new Order();
 
@@ -388,6 +436,11 @@ export default class PaymentController {
       const findOrder = await orderRepository.findOne({
         merchantUid: merchant_uid,
       });
+      const findUser = await userRepository.findOne({ order: [findOrder] });
+
+      console.log(findUser);
+
+      const errors: ValidationError[] = await validate(orderToBeSaved);
 
       if (status === "paid") {
         //merchant_uid compare => scheduled or normal
@@ -411,61 +464,53 @@ export default class PaymentController {
           orderToBeSaved.failedReason = paymentData.fail_reason;
           orderToBeSaved.amount = paymentData.amount;
 
-          //membership scheduled db update
-          await memberRepository.update(findMember.index, {
-            status: paymentData.status === "paid" ? "결제완료" : "결제실패",
-            method: paymentData.pay_method,
-            failedReason: paymentData.fail_reason,
-          });
-
-          //saving scheduled payment
-          await orderRepository.save(orderToBeSaved);
-
-          //scheduled
-          await await bookedPayment(
-            paymentData.customer_uid,
-            meruuid,
-            paymentData.amount,
-            paymentData.name,
-            await memberRepository.find()
-          ).then(async (res) => {
-            resposneBookedData = res;
-
-            console.log(meruuid);
-            console.log(resposneBookedData.data);
-
-            const findMember = await memberRepository.findOne({
-              merchantUid: res.data.response[0].merchant_uid,
-              scheduledAt: new Date(),
+          if (errors.length > 0) {
+            ctx.status = 400;
+            ctx.body = errors;
+          } else {
+            //membership scheduled db update
+            await memberRepository.update(findMember.index, {
+              status: paymentData.status === "paid" ? "결제완료" : "결제실패",
+              method: paymentData.pay_method,
+              failedReason: paymentData.fail_reason,
             });
 
-            console.log(findMember);
+            //saving scheduled payment
+            await orderRepository.save(orderToBeSaved);
 
-            ctx.status = 200;
-            ctx.body = { message: "schduled is succeed" };
-          });
-          // memberToBeSaved.status = paymentData.status;
-          // memberToBeSaved.method = paymentData.pay_method;
-          // memberToBeSaved.failedReason = paymentData.fail_resason;
+            //scheduled
+            await await bookedPayment(
+              paymentData.customer_uid,
+              meruuid,
+              paymentData.amount,
+              paymentData.name,
+              await memberRepository.find()
+            ).then(async (res) => {
+              resposneBookedData = res;
+
+              console.log(meruuid);
+              console.log(resposneBookedData.data);
+
+              const findMember = await memberRepository.findOne({
+                merchantUid: res.data.response[0].merchant_uid,
+                scheduledAt: new Date(),
+              });
+
+              console.log(findMember);
+
+              ctx.status = 200;
+              ctx.body = { message: "schduled is succeed" };
+              // memberToBeSaved.status = paymentData.status;
+              // memberToBeSaved.method = paymentData.pay_method;
+              // memberToBeSaved.failedReason = paymentData.fail_resason;
+            });
+          }
 
           //normal payment
         } else if (findOrder) {
           console.log(paymentData);
-
-          //payment value saving
-          orderToBeSaved.orderTitle = paymentData.name;
-          orderToBeSaved.member = "normal payment";
-          orderToBeSaved.name = paymentData.buyer_name;
-          orderToBeSaved.email = paymentData.buyer_email;
-          orderToBeSaved.merchantUid = paymentData.merchant_uid;
-          orderToBeSaved.status = paymentData.status;
-          orderToBeSaved.method = paymentData.pay_method;
-          orderToBeSaved.failedReason = paymentData.fail_reason;
-          orderToBeSaved.amount = paymentData.amount;
-
           //saving scheduled payment
-          await orderRepository.save(orderToBeSaved);
-
+          await orderRepository.update(findOrder.index, { status: "결제성공" });
           ctx.status = 200;
           ctx.body = { message: "paid is succeed" };
 

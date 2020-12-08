@@ -34,6 +34,7 @@ export default class FolderController {
 
     const gottenToken = ctx.request.body.token;
     const folderData = ctx.request.body.product;
+    const memoData = ctx.request.body.memo;
     console.log(folderData);
 
     const findUser = await UserRepository.findOne({
@@ -47,26 +48,43 @@ export default class FolderController {
 
       if (folderData) {
         folderData.map(async (cur: any, index: any) => {
-          const findMusic = await MusicRepository.findOne({ id: cur.id });
+          const foldData: any = {
+            id: null,
+            image: null,
+            name: null,
+            genre: null,
+            audioURL: null,
+            artist: null,
+            memo: null,
+          };
+
+          //music data
+          const getMusicData = await MusicRepository.findOne({ index: cur.id });
+
+          foldData.id = getMusicData.index;
+          foldData.image = getMusicData.image;
+          foldData.name = getMusicData.name;
+          foldData.audioURL = getMusicData.audioUrl;
+          foldData.artist = getMusicData.artist;
+          foldData.memo = memoData;
+
+          const errors: ValidationError[] = await validate(folderToBeSaved);
+
+          if (errors.length > 0) {
+            ctx.status = 400;
+            ctx.body = errors;
+          } else if (await FolderReposiotry.findOne({ id: foldData.id })) {
+            ctx.status = 400;
+            ctx.body = { error: "item already exists" };
+          } else {
+            const folder = await FolderReposiotry.save(folderData);
+            console.log(folder);
+            ctx.status = 201;
+            ctx.body = { message: "folder create success" };
+          }
         });
-      }
-
-      const errors: ValidationError[] = await validate(folderToBeSaved);
-
-      if (errors.length > 0) {
-        ctx.status = 400;
-        ctx.body = errors;
-      } else if (
-        await FolderReposiotry.findOne({ title: folderToBeSaved.title })
-      ) {
-        ctx.status = 400;
-        ctx.body = { message: "title exists" };
       } else {
-        const folder = await FolderReposiotry.save(folderToBeSaved);
-
-        console.log({ folder });
-        ctx.status = 201;
-        ctx.body = { message: "folder create success" };
+        console.log("product doesn't exits")
       }
     } else {
       ctx.status = 403;

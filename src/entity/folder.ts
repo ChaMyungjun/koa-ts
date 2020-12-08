@@ -15,26 +15,23 @@ export class Folder extends BaseEntity {
   @PrimaryGeneratedColumn()
   index: number;
 
-  @Column("simple-json", { nullable: true })
-  id: { id: number };
+  @Column()
+  id: number;
 
-  @Column("simple-json", { nullable: true })
-  image: { image: string };
+  @Column()
+  image: string;
 
-  @Column("simple-json", { nullable: true })
-  name: { name: string };
+  @Column()
+  name: string;
 
-  @Column("simple-json", { nullable: true })
-  artist: { artist: string };
+  @Column()
+  artist: string;
 
-  @Column("simple-json", { nullable: true })
-  genre: { genre: string };
+  @Column()
+  genre: string;
 
-  @Column("simple-json", { nullable: true })
-  time: { time: string };
-
-  @Column("simple-json", { nullable: true })
-  memo: { memo: string };
+  @Column({ nullable: true })
+  memo: string;
 
   @Column()
   title: string;

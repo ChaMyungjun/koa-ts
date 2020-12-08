@@ -103,11 +103,17 @@ export default class UserController {
           const user = await userRepository.update(findUser.index, {
             token: tokenToBeSaved,
           });
+          const name = findUser.name;
 
           console.log(user);
 
           ctx.status = 200;
-          ctx.body = { access_token, refresh_token, expires_in };
+          ctx.body = {
+            access_token,
+            refresh_token,
+            expires_in,
+            user: { name },
+          };
         }
       }
     } else {

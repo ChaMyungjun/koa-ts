@@ -8,6 +8,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  ManyToOne,
   OneToOne,
   PrimaryColumn,
   PrimaryGeneratedColumn,
@@ -22,6 +23,9 @@ import { getToken } from "./payment";
 export class Order extends BaseEntity {
   @PrimaryGeneratedColumn()
   index: number;
+
+  @Column({ nullable: true })
+  id: number;
 
   @Column()
   member: string;
@@ -55,6 +59,9 @@ export class Order extends BaseEntity {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @ManyToOne((type) => User, (user) => user.order)
+  user: User;
 }
 
 export async function searchingPayment(merchant_uid: any) {
