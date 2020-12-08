@@ -306,18 +306,22 @@ export default class PaymentController {
   @request("post", "/payment/order/callback")
   @summary("normal payment callback")
   public static async normalPaymentCallback(ctx: BaseContext): Promise<void> {
-    const data = ctx.request.body;
-    console.log(data);
+    console.log("general payment: ", ctx.request.body);
+    const data = ctx.request.body.merchant_uid;
     const orderRepository: Repository<Order> = getManager().getRepository(
       Order
     );
 
-    const getPaymentData: any = await searchingPayment(data.merchant_uid);
+    //payed amount
+    const getPaymentData: any = await searchingPayment(data);
     console.log(getPaymentData);
     const paymentData = getPaymentData.data.response.list[0];
+
+    //payment amount
     const findOrder = await orderRepository.findOne({
       merchantUid: paymentData.merchant_uid,
     });
+
     console.log(paymentData);
     console.log(findOrder);
 
@@ -327,25 +331,26 @@ export default class PaymentController {
       switch (status) {
         case "ready":
           ctx.status = 400;
-          ctx.body = { err: "method is not supported" };
+          ctx.body = { error: "등록된 결제 방식이 아닙니다." };
           break;
         case "paid":
           await orderRepository.update(findOrder.index, {
             status: "결제 성공",
           });
-
           ctx.status = 200;
-          ctx.body = { message: "normal payment success" };
+          ctx.body = { message: "일반결제 성공" };
           break;
         default:
           await orderRepository.update(findOrder.index, {
             status: "결제 실패",
           });
+          ctx.status = 400;
+          ctx.body = { message: "일반결제 실패" };
           break;
       }
     } else {
       ctx.status = 400;
-      ctx.body = { error: "amount is forgery" };
+      ctx.body = { error: "결제 금액이 위조 되었습니다." };
     }
   }
 
@@ -466,13 +471,14 @@ export default class PaymentController {
 
           //not noram & payment
         } else {
-          console.log(paymentData.merchant_uid);
+          console.log("merchant_uid: ", paymentData.merchant_uid);
           ctx.status = 400;
           ctx.body = status;
         }
 
         //payment failed
       } else {
+        console.log("Error: ", status);
         ctx.status = 400;
         ctx.body = status;
       }
