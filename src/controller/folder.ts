@@ -84,7 +84,7 @@ export default class FolderController {
           }
         });
       } else {
-        console.log("product doesn't exits")
+        console.log("product doesn't exits");
       }
     } else {
       ctx.status = 403;
