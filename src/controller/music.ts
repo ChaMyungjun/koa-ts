@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { BaseContext } from "koa";
-import { request, responsesAll, summary } from "koa-swagger-decorator";
+import { request, responsesAll, summary, tagsAll } from "koa-swagger-decorator";
 import { getManager, Repository } from "typeorm";
 import { validate, ValidationError } from "class-validator";
 import axios from "axios";
@@ -13,7 +13,13 @@ import { Token } from "../entity/token";
 import { Order, searchingPayment } from "../entity/order";
 import { Music } from "../entity/music";
 
-@responsesAll(["Music"])
+@responsesAll({
+  200: { description: "success" },
+  400: { description: "bad request" },
+  401: { description: "unauthorized, missing/wrong jwt token" },
+  403: { description: "" },
+})
+@tagsAll(["Music"])
 export default class MusicController {
   @request("get", "/music/find")
   @summary("getting music info")

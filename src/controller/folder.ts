@@ -8,7 +8,6 @@ import { Token } from "../entity/token";
 import { User } from "../entity/user";
 import { Folder } from "../entity/folder";
 import { Music } from "../entity/music";
-import { folder } from ".";
 
 @responsesAll({
   200: { descriptoin: "success" },
@@ -37,7 +36,8 @@ export default class FolderController {
     const gottenToken = ctx.request.header.token;
     const folderData = ctx.request.body.product;
     const memoData = ctx.request.body.memo;
-
+    const title = ctx.request.body.title;
+    
     // console.log("folderData", folderData);
 
     const findUser = await UserRepository.findOne({
@@ -46,8 +46,6 @@ export default class FolderController {
 
     if (findUser) {
       // console.log("findUser: ", findUser);
-      const title = ctx.request.body.title;
-
       if (folderData) {
         await Promise.all(
           folderData.map(async (cur: any, index: any) => {

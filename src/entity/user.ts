@@ -24,6 +24,8 @@ import { Token } from "./token";
 import { Member } from "./member";
 import { Folder } from "./folder";
 import { Order } from "./order";
+import { MusicLike } from "./musicLike";
+import { Latest } from "./latest";
 
 @Entity()
 export class User extends BaseEntity {
@@ -88,6 +90,18 @@ export class User extends BaseEntity {
     onDelete: "SET NULL",
   })
   folder: Folder[];
+
+  @ManyToOne((type) => MusicLike, (musiclike) => musiclike.user, {
+    nullable: true,
+    onDelete: "SET NULL",
+  })
+  musiclike: MusicLike[];
+
+  @ManyToOne((type) => Latest, (latest) => latest.user, {
+    nullable: true,
+    onDelete: "SET NULL",
+  })
+  latest: Latest[];
 
   @ManyToOne(() => Order, (order) => order.user, {
     nullable: true,

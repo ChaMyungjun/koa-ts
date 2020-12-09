@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { BaseContext } from "koa";
-import { request, responsesAll, summary } from "koa-swagger-decorator";
+import { request, responsesAll, summary, tagsAll } from "koa-swagger-decorator";
 import { getManager, Repository, Equal, Not, createConnection } from "typeorm";
 import { IsEmail, validate, ValidationError } from "class-validator";
 import axios from "axios";
@@ -16,7 +16,13 @@ import { Token } from "../entity/token";
 import { Order, searchingPayment } from "../entity/order";
 import { Music } from "../entity/music";
 
-@responsesAll(["Payment"])
+@responsesAll({
+  200: { description: "success" },
+  400: { description: "bad request" },
+  401: { description: "unauthorized, missing/wrong jwt token" },
+  403: { description: "" },
+})
+@tagsAll(["Payment"])
 export default class PaymentController {
   @request("post", "/payment/member/create")
   @summary("create payment info")
@@ -299,9 +305,9 @@ export default class PaymentController {
             ctx.body = { error: "이미 결제된 상품입니다." };
           } else {
             await orderRepository.save(orderData);
-            // await userRepository.update(findUser.index, {
-            //   order: [data],
-            // });
+            await userRepository.update(findUser.index, {
+              order: data,
+            });
 
             console.log(data);
 
