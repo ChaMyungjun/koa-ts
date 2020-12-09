@@ -7,6 +7,7 @@ import {
   PrimaryGeneratedColumn,
   OneToMany,
   ManyToOne,
+  JoinColumn,
 } from "typeorm";
 import { User } from "./user";
 
@@ -15,27 +16,27 @@ export class Folder extends BaseEntity {
   @PrimaryGeneratedColumn()
   index: number;
 
-  @Column()
+  @Column({ nullable: true })
   id: number;
 
-  @Column()
+  @Column({ nullable: true })
   image: string;
 
-  @Column()
+  @Column({ nullable: true })
   name: string;
 
-  @Column()
+  @Column({ nullable: true })
   artist: string;
 
-  @Column()
+  @Column({ nullable: true })
   genre: string;
 
   @Column({ nullable: true })
   memo: string;
 
-  @Column()
+  @Column({ nullable: true })
   title: string;
 
-  @ManyToOne((type) => User, (user) => user.folder)
+  @OneToMany((type) => User, (user) => user.folder)
   user: User;
 }

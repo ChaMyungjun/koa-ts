@@ -11,6 +11,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  ManyToMany,
+  ManyToOne,
 } from "typeorm";
 import { Length, IsEmail } from "class-validator";
 import crypto from "crypto";
@@ -81,22 +83,17 @@ export class User extends BaseEntity {
   @JoinColumn({ name: "member_index" })
   member: Member;
 
-  @OneToMany((type) => Order, (order) => order.user, {
+  @ManyToOne((type) => Folder, (folder): any => folder.user, {
     nullable: true,
     onDelete: "SET NULL",
   })
-  @JoinColumn({ name: "order_index" })
-  order: Order[];
-
-  @Column({nullable: true})
-  orderIndex: number;
-
-  @OneToMany((type) => Folder, (folder) => folder.user, {
-    nullable: true,
-    onDelete: "SET NULL",
-  })
-  @JoinColumn({ name: "folder_index" })
   folder: Folder[];
+
+  @ManyToOne(() => Order, (order) => order.user, {
+    nullable: true,
+    onDelete: "SET NULL",
+  })
+  order: Order[];
 }
 
 export const userSchema = {

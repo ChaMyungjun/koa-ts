@@ -57,6 +57,9 @@ protectedRouter.post("/music/find", music.gettingMusicInfo);
 //folder create
 protectedRouter.post("/folder/create", folder.createFolder);
 
+//folder delete
+protectedRouter.post("/folder/delete", folder.deleteFolder);
+
 //jwt Middleware
 protectedRouter.post("/jwt/check", jwt.regenerateToken);
 

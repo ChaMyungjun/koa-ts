@@ -7,18 +7,18 @@ import { request, summary, responsesAll, tagsAll } from "koa-swagger-decorator";
 import { Token } from "../entity/token";
 import { User } from "../entity/user";
 import { Folder } from "../entity/folder";
-import { ErrorMessageBox } from "admin-bro";
 import { Music } from "../entity/music";
+import { folder } from ".";
 
 @responsesAll({
   200: { descriptoin: "success" },
   400: { description: "bad requset" },
   401: { descriptoin: "unauthorized, missing/wrong jwt token" },
 })
-@tagsAll(["folder find"])
+@tagsAll(["Folder"])
 export default class FolderController {
   @request("post", "/folder/create")
-  @summary("find folder find")
+  @summary("create folder")
   public static async createFolder(ctx: BaseContext): Promise<void> {
     // console.log(ctx.request.body);
     const UserRepository: Repository<User> = getManager().getRepository(User);
@@ -32,63 +32,106 @@ export default class FolderController {
       Music
     );
 
-    const gottenToken = ctx.request.body.token;
+    // console.log(ctx.request);
+
+    const gottenToken = ctx.request.header.token;
     const folderData = ctx.request.body.product;
     const memoData = ctx.request.body.memo;
-    console.log(folderData);
+
+    // console.log("folderData", folderData);
 
     const findUser = await UserRepository.findOne({
       token: await TokenRepository.findOne({ token: gottenToken }),
     });
 
     if (findUser) {
-      const folderToBeSaved: Folder = new Folder();
-
-      folderToBeSaved.title = ctx.request.body.title;
+      // console.log("findUser: ", findUser);
+      const title = ctx.request.body.title;
 
       if (folderData) {
-        folderData.map(async (cur: any, index: any) => {
-          const foldData: any = {
-            id: null,
-            image: null,
-            name: null,
-            genre: null,
-            audioURL: null,
-            artist: null,
-            memo: null,
-          };
+        await Promise.all(
+          folderData.map(async (cur: any, index: any) => {
+            const foldData: any = {
+              id: null,
+              title: title,
+              image: null,
+              name: null,
+              genre: null,
+              audioURL: null,
+              artist: null,
+              memo: null,
+            };
 
-          //music data
-          const getMusicData = await MusicRepository.findOne({ index: cur.id });
+            //music data
+            const getMusicData: any = await MusicRepository.findOne({
+              index: cur.id,
+            });
 
-          foldData.id = getMusicData.index;
-          foldData.image = getMusicData.image;
-          foldData.name = getMusicData.name;
-          foldData.audioURL = getMusicData.audioUrl;
-          foldData.artist = getMusicData.artist;
-          foldData.memo = memoData;
+            // console.log(getMusicData);
+            console.log(getMusicData);
 
-          const errors: ValidationError[] = await validate(folderToBeSaved);
+            foldData.id = cur.id;
+            foldData.image = getMusicData.image;
+            foldData.name = getMusicData.name;
+            foldData.audioURL = getMusicData.audioUrl;
+            foldData.artist = getMusicData.artist;
+            foldData.memo = memoData;
 
-          if (errors.length > 0) {
-            ctx.status = 400;
-            ctx.body = errors;
-          } else if (await FolderReposiotry.findOne({ id: foldData.id })) {
-            ctx.status = 400;
-            ctx.body = { error: "item already exists" };
-          } else {
-            const folder = await FolderReposiotry.save(folderData);
-            console.log(folder);
-            ctx.status = 201;
-            ctx.body = { message: "folder create success" };
-          }
-        });
-      } else {
-        console.log("product doesn't exits");
+            console.log("foldData: ", foldData);
+
+            //error checking
+            const errors: ValidationError[] = await validate(foldData);
+
+            if (errors.length > 0) {
+              ctx.status = 400;
+              ctx.body = errors;
+            } else if (await FolderReposiotry.findOne({ id: foldData.id })) {
+              // const users = await UserRepository.find({
+              //   relations: ["folder"],
+              // });
+
+              // console.log(users);
+
+              ctx.status = 400;
+              ctx.body = { error: "이미 추가된 음악입니다." };
+            } else {
+              const folder = await FolderReposiotry.save(foldData);
+              const user = await UserRepository.update(findUser.index, {
+                folder: folder,
+              });
+              console.log(user);
+              // console.log(folder);
+              ctx.status = 200;
+              ctx.body = { user };
+            }
+          })
+        );
+        return;
       }
+      console.log("product doesn't exits");
+
+      const folder = await FolderReposiotry.save(title);
+      const user = await UserRepository.update(findUser.index, {
+        folder: folder,
+      });
+
+      console.log({ folder, user });
+
+      ctx.status = 200;
+      ctx.body = { message: "folder create but not music item" };
     } else {
       ctx.status = 403;
       ctx.body = { message: "token doesn't exist" };
     }
+  }
+
+  @request("post", "/folder/delete")
+  @summary("delete folder")
+  public static async deleteFolder(ctx: BaseContext): Promise<void> {
+    const UserRepository: Repository<User> = getManager().getRepository(User);
+
+    const user = await UserRepository.find({ relations: ["folder"] });
+    ctx.status = 200;
+    ctx.body = user;
   }
 }

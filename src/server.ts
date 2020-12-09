@@ -177,6 +177,9 @@ try {
             },
           },
         ],
+        branding: {
+          companyName: "BIBILI",
+        },
         rootPath: "/admin",
       });
 
