@@ -76,6 +76,8 @@ export default class LatestController {
             if (errors.length > 0) {
               ctx.status = 400;
               ctx.body = errors;
+
+              //pagenation or limit & offset으로 구현해야 됨
             } else if (Math.max(findLatestMusic.index) > 30) {
               const latestToBeRemoved = await latestRepository.findOne({
                 index: Math.min(findLatestMusic.index),
