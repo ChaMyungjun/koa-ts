@@ -63,7 +63,7 @@ export default class FolderController {
 
             FoldToBeSaved.memo = memoData;
             FoldToBeSaved.title = title;
-            FoldToBeSaved.user = [findUser];
+            FoldToBeSaved.user = findUser;
             FoldToBeSaved.music = getMusicData;
 
             console.log("Error");
@@ -74,7 +74,7 @@ export default class FolderController {
               ctx.status = 400;
               ctx.body = errors;
             } else if (
-              await FolderReposiotry.findOne({ id: FoldToBeSaved.id })
+              await FolderReposiotry.findOne({music: getMusicData})
             ) {
               // const users = await UserRepository.find({
               //   relations: ["folder"],
@@ -87,11 +87,8 @@ export default class FolderController {
             } else {
               const folder = await FolderReposiotry.save(FoldToBeSaved);
               console.log("save");
-              const user = await UserRepository.update(findUser.index, {
-                folder: FoldToBeSaved,
-              });
-              console.log("user", user);
-              // console.log(folder);
+              
+              console.log(folder);
               ctx.status = 200;
               ctx.body = getMusicData;
             }
@@ -102,11 +99,8 @@ export default class FolderController {
       console.log("product doesn't exits");
 
       const folder = await FolderReposiotry.save(FoldToBeSaved);
-      const user = await UserRepository.update(findUser.index, {
-        folder: FoldToBeSaved,
-      });
 
-      console.log({ folder, user });
+      console.log(folder);
 
       ctx.status = 200;
       ctx.body = { message: "folder create but not music item" };

@@ -23,11 +23,11 @@ export class Folder extends BaseEntity {
   @Column({ nullable: true })
   title: string;
 
-  @OneToMany((type) => Music, (music) => music.folder)
+  @ManyToOne((type) => Music, (music) => music.folder)
   @JoinColumn({ name: "music_index" })
-  music?: Music[];
+  music?: Music;
 
-  @OneToMany((type) => User, (user) => user.folder)
+  @ManyToOne((type) => User, (user) => user.folder)
   @JoinColumn({ name: "user_index" })
-  user?: User[];
+  user?: User;
 }

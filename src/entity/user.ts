@@ -75,7 +75,7 @@ export class User extends BaseEntity {
   @JoinColumn({ name: "member_index" })
   member: Member;
 
-  @ManyToOne((type) => Folder, (folder) => folder.user, {
+  @OneToMany((type) => Folder, (folder) => folder.user, {
     onDelete: "SET NULL",
   })
   @JoinColumn({ name: "folder_index" })
