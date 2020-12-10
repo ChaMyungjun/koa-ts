@@ -282,7 +282,7 @@ export default class PaymentController {
           };
 
           //music data
-          const getMusicData = await musicRepository.findOne({ index: cur.id });
+          const getMusicData = await musicRepository.findOne({ id: cur.id });
 
           //order data
           orderData.id = cur.id; // cur.id = 2, 1

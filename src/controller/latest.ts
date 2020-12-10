@@ -1,3 +1,4 @@
+/* eslint-disable prefer-spread */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { BaseContext } from "koa";
@@ -9,6 +10,7 @@ import { Music } from "../entity/music";
 import { User } from "../entity/user";
 import { Token } from "../entity/token";
 import { validate, ValidationError } from "class-validator";
+import { useCurrentAdmin, useTranslation } from "admin-bro";
 
 @responsesAll({
   200: { description: "success" },
@@ -41,11 +43,9 @@ export default class LatestController {
       token: await TokenRepository.findOne({ token: gottenToken }),
     });
 
-    const findLatestMusic = await latestRepository.findOne({
-      name: findUser.name,
-    });
-
     if (findUser) {
+      console.log(findUser);
+
       if (musiclatestData) {
         await Promise.all(
           musiclatestData.map(async (cur: any, index: any) => {
@@ -53,41 +53,67 @@ export default class LatestController {
               id: null,
               name: null,
               image: null,
-              artiest: null,
+              artist: null,
               genre: null,
               audioUrl: null,
               username: null,
             };
 
             const getMusicData: any = await musicRepository.findOne({
-              index: cur.id,
+              id: cur.id,
             });
 
             latestData.id = cur.id;
             latestData.name = getMusicData.name;
             latestData.image = getMusicData.image;
-            latestData.artiest = getMusicData.artiest;
+            latestData.artist = getMusicData.artist;
             latestData.genre = getMusicData.genre;
             latestData.audioUrl = getMusicData.audioUrl;
             latestData.username = findUser.name;
 
             const errors: ValidationError[] = await validate(latestData);
 
+            const findLatestData = await await latestRepository.find({
+              username: findUser.name,
+            });
+
             if (errors.length > 0) {
+              console.log("Error: ", errors);
               ctx.status = 400;
               ctx.body = errors;
 
               //pagenation or limit & offset으로 구현해야 됨
-            } else if (Math.max(findLatestMusic.index) > 30) {
+            } else if (
+              (await (await latestRepository.find({ username: findUser.name }))
+                .length) > 29
+            ) {
+              console.log(
+                "min index num",
+                Math.min.apply(
+                  Math,
+                  findLatestData.map((cur, index) => {
+                    return cur.index;
+                  })
+                )
+              );
+
               const latestToBeRemoved = await latestRepository.findOne({
-                index: Math.min(findLatestMusic.index),
+                index: Math.min.apply(
+                  Math,
+                  findLatestData.map((cur, index) => {
+                    return cur.index;
+                  })
+                ),
               });
 
               const latestRemoved = await latestRepository.remove(
                 latestToBeRemoved
               );
 
+              console.log(latestRemoved);
+
               const latest = await latestRepository.save(latestData);
+
               console.log(latest);
 
               ctx.status = 201;
@@ -106,9 +132,11 @@ export default class LatestController {
           })
         );
       } else {
+        console.log("empty data");
         return;
       }
     } else {
+      console.log("token doesn't exists");
       ctx.status = 400;
       ctx.body = { error: "token doesn't exists" };
     }

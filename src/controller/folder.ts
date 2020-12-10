@@ -33,57 +33,49 @@ export default class FolderController {
 
     // console.log(ctx.request);
 
-    const gottenToken = ctx.request.header.token;
+    const gottenToken = ctx.request.header.authorization.split(" ")[1];
     const folderData = ctx.request.body.product;
     const memoData = ctx.request.body.memo;
     const title = ctx.request.body.title;
-    
+
     // console.log("folderData", folderData);
 
     const findUser = await UserRepository.findOne({
       token: await TokenRepository.findOne({ token: gottenToken }),
     });
 
+    const FoldToBeSaved: Folder = new Folder();
+
     if (findUser) {
+      FoldToBeSaved.memo = memoData;
+      FoldToBeSaved.title = title;
       // console.log("findUser: ", findUser);
       if (folderData) {
         await Promise.all(
           folderData.map(async (cur: any, index: any) => {
-            const foldData: any = {
-              id: null,
-              title: title,
-              image: null,
-              name: null,
-              genre: null,
-              audioURL: null,
-              artist: null,
-              memo: null,
-            };
-
             //music data
             const getMusicData: any = await MusicRepository.findOne({
-              index: cur.id,
+              id: cur.id,
             });
 
             // console.log(getMusicData);
-            console.log(getMusicData);
+            console.log("Get Music Data", getMusicData);
 
-            foldData.id = cur.id;
-            foldData.image = getMusicData.image;
-            foldData.name = getMusicData.name;
-            foldData.audioURL = getMusicData.audioUrl;
-            foldData.artist = getMusicData.artist;
-            foldData.memo = memoData;
+            FoldToBeSaved.memo = memoData;
+            FoldToBeSaved.title = title;
+            FoldToBeSaved.user = [findUser];
+            FoldToBeSaved.music = getMusicData;
 
-            console.log("foldData: ", foldData);
-
+            console.log("Error");
             //error checking
-            const errors: ValidationError[] = await validate(foldData);
+            const errors: ValidationError[] = await validate(FoldToBeSaved);
 
             if (errors.length > 0) {
               ctx.status = 400;
               ctx.body = errors;
-            } else if (await FolderReposiotry.findOne({ id: foldData.id })) {
+            } else if (
+              await FolderReposiotry.findOne({ id: FoldToBeSaved.id })
+            ) {
               // const users = await UserRepository.find({
               //   relations: ["folder"],
               // });
@@ -93,14 +85,15 @@ export default class FolderController {
               ctx.status = 400;
               ctx.body = { error: "이미 추가된 음악입니다." };
             } else {
-              const folder = await FolderReposiotry.save(foldData);
+              const folder = await FolderReposiotry.save(FoldToBeSaved);
+              console.log("save");
               const user = await UserRepository.update(findUser.index, {
-                folder: folder,
+                folder: FoldToBeSaved,
               });
-              console.log(user);
+              console.log("user", user);
               // console.log(folder);
               ctx.status = 200;
-              ctx.body = { user };
+              ctx.body = getMusicData;
             }
           })
         );
@@ -108,9 +101,9 @@ export default class FolderController {
       }
       console.log("product doesn't exits");
 
-      const folder = await FolderReposiotry.save(title);
+      const folder = await FolderReposiotry.save(FoldToBeSaved);
       const user = await UserRepository.update(findUser.index, {
-        folder: folder,
+        folder: FoldToBeSaved,
       });
 
       console.log({ folder, user });

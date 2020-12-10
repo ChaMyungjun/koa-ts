@@ -13,6 +13,7 @@ import {
   OneToMany,
   ManyToMany,
   ManyToOne,
+  JoinTable,
 } from "typeorm";
 import { Length, IsEmail } from "class-validator";
 import crypto from "crypto";
@@ -26,6 +27,7 @@ import { Folder } from "./folder";
 import { Order } from "./order";
 import { MusicLike } from "./musicLike";
 import { Latest } from "./latest";
+import { Music } from "./music";
 
 @Entity()
 export class User extends BaseEntity {
@@ -57,56 +59,36 @@ export class User extends BaseEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToOne((type) => Company, (company) => company.index, {
-    nullable: true,
-    onDelete: "SET NULL",
-  })
+  @OneToOne((type) => Company, (company) => company.index)
   @JoinColumn({ name: "company_index" })
   company: Company;
 
-  @OneToOne((type) => Payment, (payment) => payment.index, {
-    nullable: true,
-    onDelete: "SET NULL",
-  })
+  @OneToOne((type) => Payment, (payment) => payment.index)
   @JoinColumn({ name: "payment_index" })
   payment: Payment;
 
-  @OneToOne((type) => Token, (token) => token.index, {
-    nullable: true,
-    onDelete: "SET NULL",
-  })
+  @OneToOne((type) => Token, (token) => token.index)
   @JoinColumn({ name: "token_index" })
   token: Token;
 
-  @OneToOne((type) => Member, (member) => member.index, {
-    nullable: true,
-    onDelete: "SET NULL",
-  })
+  @OneToOne((type) => Member, (member) => member.index)
   @JoinColumn({ name: "member_index" })
   member: Member;
 
-  @ManyToOne((type) => Folder, (folder): any => folder.user, {
-    nullable: true,
+  @ManyToOne((type) => Folder, (folder) => folder.user, {
     onDelete: "SET NULL",
   })
-  folder: Folder[];
+  @JoinColumn({ name: "folder_index" })
+  folder: Folder;
 
-  @ManyToOne((type) => MusicLike, (musiclike) => musiclike.user, {
-    nullable: true,
-    onDelete: "SET NULL",
-  })
+  @OneToMany((type) => MusicLike, (musiclike) => musiclike.id)
+  @JoinColumn()
   musiclike: MusicLike[];
 
-  @ManyToOne((type) => Latest, (latest) => latest.user, {
-    nullable: true,
-    onDelete: "SET NULL",
-  })
+  @ManyToOne((type) => Latest, (latest) => latest.user)
   latest: Latest[];
 
-  @ManyToOne(() => Order, (order) => order.user, {
-    nullable: true,
-    onDelete: "SET NULL",
-  })
+  @ManyToOne(() => Order, (order) => order.user)
   order: Order[];
 }
 

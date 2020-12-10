@@ -16,6 +16,18 @@ export class Collection extends BaseEntity {
   @Column()
   image: string;
 
+  @Column()
+  like: string;
+
+  @Column()
+  title: string;
+
+  @Column()
+  description: string;
+
+  @Column()
+  likeCount: number;
+
   @Column({ nullable: true })
   social_insta: string;
 
@@ -24,10 +36,4 @@ export class Collection extends BaseEntity {
 
   @Column({ nullable: true })
   social_facebook: string;
-
-  @Column()
-  title: string;
-
-  @Column()
-  description: string;
 }

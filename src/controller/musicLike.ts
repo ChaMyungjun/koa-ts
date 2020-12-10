@@ -9,8 +9,8 @@ import { getManager, Repository } from "typeorm";
 import { Token } from "../entity/token";
 import { MusicLike } from "../entity/musicLike";
 import { Music } from "../entity/music";
-import { music } from ".";
 import { validate, ValidationError } from "class-validator";
+import { musicLike } from ".";
 
 @responsesAll({
   200: { descriptoin: "success" },
@@ -19,7 +19,7 @@ import { validate, ValidationError } from "class-validator";
 })
 @tagsAll(["MusicLike"])
 export default class MusicLikeController {
-  @request("post", "/musiclike/create")
+  @request("post", "/music/like/save")
   @summary("create music like")
   public static async createMusicLike(ctx: BaseContext): Promise<void> {
     const UserRepository: Repository<User> = getManager().getRepository(User);
@@ -33,60 +33,70 @@ export default class MusicLikeController {
       Music
     );
 
-    const gottenToken = ctx.request.header.token;
-    const musicLikeData = ctx.request.body.product;
-    const likeData = ctx.request.body.like;
+    console.log("Requset: ", ctx.request.body);
 
+    const gottenToken = ctx.request.header.authorization.split(" ")[1];
+    // console.log(gottenToken[1]);
+    const musicLikeData = ctx.request.body.music_id;
     const findUser = await UserRepository.findOne({
       token: await TokenRepository.findOne({ token: gottenToken }),
     });
 
     if (findUser) {
       if (musicLikeData) {
-        await Promise.all(
-          musicLikeData.map(async (cur: any, index: any) => {
-            const musicData: any = {
-              id: null,
-              image: null,
-              name: null,
-              genre: null,
-              audioUrl: null,
-              artist: null,
-              like: null,
-            };
+        const getMusicData: any = await MusicRepository.findOne({
+          id: musicLikeData,
+        });
+        const getLikeData: any = await MusicLikeRepository.findOne({
+          user: findUser,
+        });
+        console.log(getLikeData);
 
-            const getMusicData: any = await MusicRepository.findOne({
-              index: cur.id,
-            });
+        const musicLikeToBeSaved: MusicLike = new MusicLike();
 
-            console.log(getMusicData);
+        musicLikeToBeSaved.music = getMusicData;
+        musicLikeToBeSaved.user = findUser;
+        musicLikeToBeSaved.like = ctx.request.body.like;
 
-            musicData.id = cur.id;
-            musicData.image = getMusicData.image;
-            musicData.name = getMusicData.name;
-            musicData.genre = getMusicData.genre;
-            musicData.audioUrl = getMusicData.audioUrl;
-            musicData.artist = getMusicData.artist;
-            musicData.like = !likeData;
+        console.log("get Music Data", getMusicData);
 
-            const errors: ValidationError[] = await validate(musicData);
+        console.log("errors");
+        const errors: ValidationError[] = await validate(musicLikeToBeSaved);
 
-            if (errors.length > 0) {
-              ctx.status = 400;
-              ctx.body = errors;
-            } else {
-              const musicLike = await MusicLikeRepository.save(musicData);
-              const user = await UserRepository.update(findUser.index, {
-                musiclike: musicLike,
-              });
+        if (errors.length > 0) {
+          console.log("error");
+          ctx.status = 400;
+          ctx.body = errors;
+        } else if (
+          await MusicLikeRepository.findOne({ like: musicLikeToBeSaved.like })
+        ) {
+          const findMusicData = await MusicLikeRepository.findOne({
+            music: getMusicData,
+          });
 
-              console.log({ musicLike, user });
+          console.log("findMusicData: ", findMusicData);
 
-              ctx.status = 200;
-              ctx.body = { message: "create music like success" };
-            }
-          })
-        );
+          const MusicRemove = await MusicLikeRepository.remove(findMusicData);
+
+          console.log("Music To Be Remove", findMusicData);
+          console.log("Remove Data", MusicRemove);
+
+          ctx.status = 204;
+        } else {
+          const findMusicData = await MusicLikeRepository.findOne({
+            music: getMusicData,
+          });
+
+          console.log("saved");
+          const musicLike = await MusicLikeRepository.save(musicLikeToBeSaved);
+
+          console.log(musicLike);
+
+          console.log(findMusicData);
+
+          ctx.status = 201;
+          ctx.body = getMusicData;
+        }
       } else {
         console.log("product doesn't exists");
         ctx.status = 400;

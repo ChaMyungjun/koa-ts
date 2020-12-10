@@ -26,7 +26,7 @@ export class Latest extends BaseEntity {
   image: string;
 
   @Column()
-  artiest: string;
+  artist: string;
 
   @Column()
   genre: string;

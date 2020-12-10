@@ -36,4 +36,34 @@ export default class MusicController {
 
     console.log("Getting Music");
   }
+
+  // @request("post", "/music/like/save")
+  // @summary("testing")
+  // public static async testingMtoM(ctx: BaseContext): Promise<void> {
+  //   const musicRepository: Repository<Music> = await getManager().getRepository(
+  //     Music
+  //   );
+  //   const userRepository: Repository<User> = await getManager().getRepository(
+  //     User
+  //   );
+  //   const tokenRepository: Repository<Token> = await getManager().getRepository(
+  //     Token
+  //   );
+
+  //   const gottenToken = ctx.request.header.authorization;
+
+  //   const findUser = await userRepository.findOne({
+  //     token: await tokenRepository.findOne({ token: gottenToken }),
+  //   });
+
+  //   if(findUser) {
+  //     const findLikeData = await musicRepository.find();
+
+      
+
+  //   } else {
+  //     ctx.status = 403;
+  //     ctx.body = {error: "token doesn't exists"}
+  //   }
+  // }
 }

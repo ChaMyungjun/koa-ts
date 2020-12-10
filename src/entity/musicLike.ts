@@ -7,39 +7,34 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  ManyToMany,
+  ManyToOne,
+  JoinTable,
+  JoinColumn,
 } from "typeorm";
+import { Music } from "./music";
 
 import { User } from "./user";
 
 @Entity()
 export class MusicLike extends BaseEntity {
   @PrimaryGeneratedColumn()
-  index: number;
-
-  @Column()
-  name: string;
-
-  @Column()
-  image: string;
-
-  @Column()
-  artiest: string;
-
-  @Column()
-  genre: string;
+  id: number;
 
   @Column({ nullable: true })
-  audioUrl: string;
-
-  @Column()
   like: boolean;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdat: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedat: Date;
 
-  @OneToMany((type) => User, (user) => user.musiclike)
+  @ManyToOne((type) => User, (user) => user.musiclike)
+  @JoinColumn()
   user: User;
+
+  @ManyToOne((type) => Music, (music) => music.musiclike, { cascade: true })
+  @JoinColumn({ name: "music_index" })
+  music: Music;
 }

@@ -5,4 +5,6 @@ export { default as payment } from "./payment";
 export { default as token } from "./covertToken";
 export { default as music } from "./music";
 export { default as folder } from "./folder";
+export { default as latest } from "./latest";
+export { default as musicLike } from "./musicLike";
 export { default as jwt } from "./jwt";

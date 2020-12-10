@@ -11,7 +11,10 @@ import {
   jwt,
   music,
   folder,
+  latest,
+  // musicLike,
 } from "./controller";
+import { Latest } from "./entity/latest";
 
 const protectedRouter = new SwaggerRouter();
 
@@ -48,9 +51,6 @@ protectedRouter.post("/payment/order/create", payment.craeteOrder);
 //searching normal payment
 protectedRouter.post("/payment/order/callback", payment.normalPaymentCallback);
 
-//music find
-protectedRouter.post("/music/find", music.gettingMusicInfo);
-
 //music collecction
 // protectedRouter.post()
 
@@ -59,6 +59,12 @@ protectedRouter.post("/folder/create", folder.createFolder);
 
 //folder delete
 protectedRouter.post("/folder/delete", folder.deleteFolder);
+
+//music like save
+// protectedRouter.post("/music/like/save", musicLike.createMusicLike);
+
+//latest create
+protectedRouter.post("/music/latest", latest.saveLatestMusic);
 
 //jwt Middleware
 protectedRouter.post("/jwt/check", jwt.regenerateToken);

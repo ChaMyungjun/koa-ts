@@ -65,6 +65,7 @@
     "@types/jsonwebtoken": "^8.5.0",
     "@types/koa-passport": "^4.0.2",
     "@types/koa-session": "^5.10.3",
+    "@types/lodash": "^4.14.165",
     "@types/passport-oauth2": "^1.4.9",
     "@types/underscore": "^1.10.24",
     "admin-bro": "^3.3.1",

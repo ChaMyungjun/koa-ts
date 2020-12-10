@@ -1,15 +1,31 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  *
  * 노래: id:num, image, name: string, artist: string, genre:string, price,
  *
  */
 
-import { Entity, Column, BaseEntity, PrimaryGeneratedColumn } from "typeorm";
+import {
+  Entity,
+  Column,
+  BaseEntity,
+  PrimaryGeneratedColumn,
+  OneToMany,
+  ManyToOne,
+  ManyToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+  JoinColumn,
+  JoinTable,
+} from "typeorm";
+import { Folder } from "./folder";
+import { MusicLike } from "./musicLike";
+import { User } from "./user";
 
 @Entity()
 export class Music extends BaseEntity {
   @PrimaryGeneratedColumn()
-  index: number;
+  id: number;
 
   @Column()
   image: string;
@@ -29,11 +45,22 @@ export class Music extends BaseEntity {
   @Column()
   price: number;
 
-  // @Column({ nullable: true })
-  // errorText: string;
+  // @Column()
+  // like: boolean;
 
-  // @Column({ nullable: true })
-  // usedUrl: "";
+  @OneToMany((type) => MusicLike, (musiclike) => musiclike.id)
+  @JoinColumn({ name: "musicliked_index" })
+  musiclike: MusicLike;
+
+  @OneToMany((type) => Folder, (folder) => folder.music)
+  @JoinColumn({ name: "folder_index" })
+  folder: Folder;
+
+  @CreateDateColumn()
+  createdat: Date;
+
+  @UpdateDateColumn()
+  updatedat: Date;
 }
 
 export const musicSchema = {
