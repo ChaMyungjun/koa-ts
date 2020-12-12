@@ -14,7 +14,7 @@ import { Order, searchingPayment } from "../entity/order";
 import { Music } from "../entity/music";
 import { music, user } from ".";
 import { serialize } from "v8";
-import { findIndex, where } from "underscore";
+import { find, findIndex, where } from "underscore";
 
 @responsesAll({
   200: { description: "success" },
@@ -66,17 +66,19 @@ export default class MusicController {
         id: ctx.request.body.music_id,
       });
 
-      console.log(getMusicData);
+      // console.log(getMusicData);
 
       // console.log(await musicRepository.find({ where: { user: findUser } }));
 
-      const musicUserData = await musicRepository.find({ relations: ["user"] });
+      const musicUserData = await musicRepository.find({
+        relations: ["user"],
+        where: { id: getMusicData.id },
+      });
 
-      console.log(musicUserData);
+      // console.log(musicUserData);
 
       musicUserData.map(async (cur, index) => {
-        console.log("dfdffdfd", cur.user[index]);
-        console.log(findUser);
+        // console.log("dfdffdfd", cur.user[index]);
 
         // if (cur.user[index]?.index === findUser.index ) {
         //   console.log("delete");
@@ -84,19 +86,21 @@ export default class MusicController {
         //   console.log("add");
         // }
 
-        if (cur.user[index] === findUser) {
+        if (cur.user[index]?.index === findUser.index) {
           // 유저의 뮤직 릴레이션 제거
           getMusicData.user = [];
           await musicRepository.save(getMusicData);
 
+          console.log("삭제relation delete", getMusicData);
+
           ctx.status = 204;
           ctx.body = "유저의 뮤직 릴레이션 삭제";
-
-          console.log("삭제relation delete", getMusicData);
+          //undefined
         } else {
           // 유저에 뮤직 릴레이션 추가
           getMusicData.user = [findUser];
           await musicRepository.save(getMusicData);
+
           console.log("추가getMusicData", getMusicData);
 
           ctx.body = 201;
