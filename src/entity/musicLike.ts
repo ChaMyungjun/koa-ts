@@ -24,12 +24,6 @@ export class MusicLike extends BaseEntity {
   @Column({ nullable: true })
   like: boolean;
 
-  @CreateDateColumn()
-  createdat: Date;
-
-  @UpdateDateColumn()
-  updatedat: Date;
-
   @ManyToOne((type) => User, (user) => user.musiclike)
   @JoinColumn()
   user: User;
@@ -37,4 +31,10 @@ export class MusicLike extends BaseEntity {
   @ManyToOne((type) => Music, (music) => music.musiclike, { cascade: true })
   @JoinColumn({ name: "music_index" })
   music: Music;
+
+  @CreateDateColumn()
+  createdat: Date;
+
+  @UpdateDateColumn()
+  updatedat: Date;
 }

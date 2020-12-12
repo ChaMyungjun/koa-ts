@@ -76,20 +76,29 @@ export class User extends BaseEntity {
   member: Member;
 
   @OneToMany((type) => Folder, (folder) => folder.user, {
-    onDelete: "SET NULL",
+    cascade: true,
   })
   @JoinColumn({ name: "folder_index" })
-  folder: Folder;
+  folder: Folder[];
 
-  @OneToMany((type) => MusicLike, (musiclike) => musiclike.id)
+  @OneToMany((type) => MusicLike, (musiclike) => musiclike.id, {
+    cascade: true,
+  })
   @JoinColumn()
   musiclike: MusicLike[];
 
-  @ManyToOne((type) => Latest, (latest) => latest.user)
+  @OneToMany((type) => Latest, (latest) => latest.user, {
+    onDelete: "SET NULL",
+    nullable: true,
+  })
+  @JoinColumn({ name: "latest_index" })
   latest: Latest[];
 
-  @ManyToOne(() => Order, (order) => order.user)
+  @OneToMany(() => Order, (order) => order.user)
   order: Order[];
+
+  @ManyToMany((type) => Music, (music) => music.user, { cascade: true })
+  music: Music;
 }
 
 export const userSchema = {

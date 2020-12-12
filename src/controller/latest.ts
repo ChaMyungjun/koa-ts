@@ -10,7 +10,6 @@ import { Music } from "../entity/music";
 import { User } from "../entity/user";
 import { Token } from "../entity/token";
 import { validate, ValidationError } from "class-validator";
-import { useCurrentAdmin, useTranslation } from "admin-bro";
 
 @responsesAll({
   200: { description: "success" },
@@ -36,12 +35,14 @@ export default class LatestController {
       Token
     );
 
-    const gottenToken = ctx.request.header.token;
+    const gottenToken = ctx.request.header.authorization.split(" ")[1];
     const musiclatestData = ctx.request.body.product;
 
     const findUser = await UserRepository.findOne({
       token: await TokenRepository.findOne({ token: gottenToken }),
     });
+
+    const latestToBeSaved: Latest = new Latest();
 
     if (findUser) {
       console.log(findUser);
@@ -49,49 +50,29 @@ export default class LatestController {
       if (musiclatestData) {
         await Promise.all(
           musiclatestData.map(async (cur: any, index: any) => {
-            const latestData: any = {
-              id: null,
-              name: null,
-              image: null,
-              artist: null,
-              genre: null,
-              audioUrl: null,
-              username: null,
-            };
-
             const getMusicData: any = await musicRepository.findOne({
               id: cur.id,
             });
 
-            latestData.id = cur.id;
-            latestData.name = getMusicData.name;
-            latestData.image = getMusicData.image;
-            latestData.artist = getMusicData.artist;
-            latestData.genre = getMusicData.genre;
-            latestData.audioUrl = getMusicData.audioUrl;
-            latestData.username = findUser.name;
+            latestToBeSaved.user = findUser;
+            latestToBeSaved.music = [getMusicData];
 
-            const errors: ValidationError[] = await validate(latestData);
+            const errors: ValidationError[] = await validate(latestToBeSaved);
 
-            const findLatestData = await await latestRepository.find({
-              username: findUser.name,
+            const findlatestUser = await latestRepository.find({
+              user: latestToBeSaved.user,
             });
 
             if (errors.length > 0) {
               console.log("Error: ", errors);
               ctx.status = 400;
               ctx.body = errors;
-
-              //pagenation or limit & offset으로 구현해야 됨
-            } else if (
-              (await (await latestRepository.find({ username: findUser.name }))
-                .length) > 29
-            ) {
+            } else if ((await findlatestUser.length) > 29) {
               console.log(
                 "min index num",
                 Math.min.apply(
                   Math,
-                  findLatestData.map((cur, index) => {
+                  findlatestUser.map((cur, index) => {
                     return cur.index;
                   })
                 )
@@ -100,7 +81,7 @@ export default class LatestController {
               const latestToBeRemoved = await latestRepository.findOne({
                 index: Math.min.apply(
                   Math,
-                  findLatestData.map((cur, index) => {
+                  findlatestUser.map((cur, index) => {
                     return cur.index;
                   })
                 ),
@@ -112,7 +93,7 @@ export default class LatestController {
 
               console.log(latestRemoved);
 
-              const latest = await latestRepository.save(latestData);
+              const latest = await latestRepository.save(latestToBeSaved);
 
               console.log(latest);
 
@@ -121,10 +102,7 @@ export default class LatestController {
                 message: "길이를 초과하여 마지막 음악을 삭제하였습니다.",
               };
             } else {
-              const latest = await latestRepository.save(latestData);
-              const user = await UserRepository.update(findUser.index, {
-                latest: latest,
-              });
+              const latest = await latestRepository.save(latestToBeSaved);
 
               ctx.status = 200;
               ctx.body = { message: "latest list saving success" };

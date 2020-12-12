@@ -68,7 +68,7 @@ export default class MusicLikeController {
           ctx.status = 400;
           ctx.body = errors;
         } else if (
-          await MusicLikeRepository.findOne({ like: musicLikeToBeSaved.like })
+          await MusicLikeRepository.findOne({ music: musicLikeToBeSaved.music })
         ) {
           const findMusicData = await MusicLikeRepository.findOne({
             music: getMusicData,

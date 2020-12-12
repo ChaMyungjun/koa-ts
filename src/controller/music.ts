@@ -12,6 +12,9 @@ import { Payment, uuidv4, getToken, issueBilling } from "../entity/payment";
 import { Token } from "../entity/token";
 import { Order, searchingPayment } from "../entity/order";
 import { Music } from "../entity/music";
+import { music, user } from ".";
+import { serialize } from "v8";
+import { findIndex, where } from "underscore";
 
 @responsesAll({
   200: { description: "success" },
@@ -37,33 +40,72 @@ export default class MusicController {
     console.log("Getting Music");
   }
 
-  // @request("post", "/music/like/save")
-  // @summary("testing")
-  // public static async testingMtoM(ctx: BaseContext): Promise<void> {
-  //   const musicRepository: Repository<Music> = await getManager().getRepository(
-  //     Music
-  //   );
-  //   const userRepository: Repository<User> = await getManager().getRepository(
-  //     User
-  //   );
-  //   const tokenRepository: Repository<Token> = await getManager().getRepository(
-  //     Token
-  //   );
+  @request("post", "/music/like/save")
+  @summary("testing")
+  public static async musicLikeCreate(ctx: BaseContext): Promise<void> {
+    const musicRepository: Repository<Music> = await getManager().getRepository(
+      Music
+    );
+    const userRepository: Repository<User> = await getManager().getRepository(
+      User
+    );
+    const tokenRepository: Repository<Token> = await getManager().getRepository(
+      Token
+    );
 
-  //   const gottenToken = ctx.request.header.authorization;
+    const gottenToken = ctx.request.header.authorization.split(" ")[1];
 
-  //   const findUser = await userRepository.findOne({
-  //     token: await tokenRepository.findOne({ token: gottenToken }),
-  //   });
+    const findUser = await userRepository.findOne({
+      token: await tokenRepository.findOne({ token: gottenToken }),
+    });
 
-  //   if(findUser) {
-  //     const findLikeData = await musicRepository.find();
+    console.log(findUser);
 
-      
+    if (findUser) {
+      const getMusicData = await musicRepository.findOne({
+        id: ctx.request.body.music_id,
+      });
 
-  //   } else {
-  //     ctx.status = 403;
-  //     ctx.body = {error: "token doesn't exists"}
-  //   }
-  // }
+      console.log(getMusicData);
+
+      // console.log(await musicRepository.find({ where: { user: findUser } }));
+
+      const musicUserData = await musicRepository.find({ relations: ["user"] });
+
+      console.log(musicUserData);
+
+      musicUserData.map(async (cur, index) => {
+        console.log("dfdffdfd", cur.user[index]);
+        console.log(findUser);
+
+        // if (cur.user[index]?.index === findUser.index ) {
+        //   console.log("delete");
+        // } else {
+        //   console.log("add");
+        // }
+
+        if (cur.user[index] === findUser) {
+          // 유저의 뮤직 릴레이션 제거
+          getMusicData.user = [];
+          await musicRepository.save(getMusicData);
+
+          ctx.status = 204;
+          ctx.body = "유저의 뮤직 릴레이션 삭제";
+
+          console.log("삭제relation delete", getMusicData);
+        } else {
+          // 유저에 뮤직 릴레이션 추가
+          getMusicData.user = [findUser];
+          await musicRepository.save(getMusicData);
+          console.log("추가getMusicData", getMusicData);
+
+          ctx.body = 201;
+          ctx.body = "유저의 뮤직 릴레이션 추가";
+        }
+      });
+    } else {
+      ctx.status = 403;
+      ctx.body = { error: "token doesn't exists" };
+    }
+  }
 }

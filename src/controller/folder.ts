@@ -8,6 +8,7 @@ import { Token } from "../entity/token";
 import { User } from "../entity/user";
 import { Folder } from "../entity/folder";
 import { Music } from "../entity/music";
+import { folder, user } from ".";
 
 @responsesAll({
   200: { descriptoin: "success" },
@@ -54,6 +55,8 @@ export default class FolderController {
         await Promise.all(
           folderData.map(async (cur: any, index: any) => {
             //music data
+
+            console.log(cur.id);
             const getMusicData: any = await MusicRepository.findOne({
               id: cur.id,
             });
@@ -74,7 +77,7 @@ export default class FolderController {
               ctx.status = 400;
               ctx.body = errors;
             } else if (
-              await FolderReposiotry.findOne({music: getMusicData})
+              await FolderReposiotry.findOne({ music: getMusicData })
             ) {
               // const users = await UserRepository.find({
               //   relations: ["folder"],
@@ -86,24 +89,28 @@ export default class FolderController {
               ctx.body = { error: "이미 추가된 음악입니다." };
             } else {
               const folder = await FolderReposiotry.save(FoldToBeSaved);
+              const findFolderMusicData = await FolderReposiotry.find({
+                user: findUser,
+              });
+
               console.log("save");
-              
-              console.log(folder);
-              ctx.status = 200;
-              ctx.body = getMusicData;
+
+
+              // console.log(folder);
+              ctx.status = 201;
             }
           })
         );
-        return;
+      } else {
+        console.log("product doesn't exits");
+
+        const folder = await FolderReposiotry.save(FoldToBeSaved);
+
+        console.log(folder);
+
+        ctx.status = 200;
+        ctx.body = { message: "folder create but not music item" };
       }
-      console.log("product doesn't exits");
-
-      const folder = await FolderReposiotry.save(FoldToBeSaved);
-
-      console.log(folder);
-
-      ctx.status = 200;
-      ctx.body = { message: "folder create but not music item" };
     } else {
       ctx.status = 403;
       ctx.body = { message: "token doesn't exist" };

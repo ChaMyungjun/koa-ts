@@ -12,7 +12,7 @@ import {
   music,
   folder,
   latest,
-  // musicLike,
+  musicLike,
 } from "./controller";
 import { Latest } from "./entity/latest";
 
@@ -26,6 +26,7 @@ protectedRouter.put("/user/modify", user.updateUser); //modify
 protectedRouter.delete("/users/:id", user.deleteUser); //specified member delete
 protectedRouter.delete("/testusers", user.deleteTestUsers); // All member delete
 protectedRouter.post("/user/logout", user.logoutUser); //user logout
+
 // social logout
 // delete token in db
 protectedRouter.post("/user/logout", user.logoutUser);
@@ -61,7 +62,7 @@ protectedRouter.post("/folder/create", folder.createFolder);
 protectedRouter.post("/folder/delete", folder.deleteFolder);
 
 //music like save
-// protectedRouter.post("/music/like/save", musicLike.createMusicLike);
+protectedRouter.post("/music/like/save", music.musicLikeCreate);
 
 //latest create
 protectedRouter.post("/music/latest", latest.saveLatestMusic);
