@@ -28,7 +28,11 @@ export class MusicLike extends BaseEntity {
   @JoinColumn()
   user: User;
 
-  @ManyToOne((type) => Music, (music) => music.musiclike, { cascade: true })
+  @ManyToOne((type) => Music, (music) => music.musiclike, {
+    cascade: true,
+    onDelete: "SET NULL",
+    nullable: true,
+  })
   @JoinColumn({ name: "music_index" })
   music: Music;
 

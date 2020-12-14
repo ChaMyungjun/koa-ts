@@ -17,8 +17,8 @@ import { createContext } from "vm";
 @tagsAll(["Music Collection"])
 export default class MusicClassController {
   @request("post", "/music/collection")
-  @summary("send music collection")
-  public static async sendMusicCollection(ctx: BaseContext): Promise<void> {
+  @summary("create collection like")
+  public static async createCollectionLike(ctx: BaseContext): Promise<void> {
     const UserRepository: Repository<User> = getManager().getRepository(User);
     const TokenRepository: Repository<Token> = getManager().getRepository(
       Token
@@ -51,10 +51,15 @@ export default class MusicClassController {
       } else {
         // const collection = await CollectionRepository.update()
       }
-
     } else {
       ctx.status = 403;
       ctx.body = { error: "token doesn't exists" };
     }
+  }
+
+  @request("get", "/music/collection")
+  @summary("send music collection")
+  public static async sendCollection(ctx: BaseContext): Promise<void> {
+    console.log("send collection");
   }
 }

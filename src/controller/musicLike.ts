@@ -79,9 +79,12 @@ export default class MusicLikeController {
 
           console.log("findMusicData: ", findMusicData);
 
-          await MusicLikeRepository.update(findUser.index, {
-            like: !likeStatus,
+          await MusicLikeRepository.update(findMusicData.id, {
+            like: false,
           });
+
+          const removedData = await MusicLikeRepository.remove(findMusicData);
+          console.log("removed Data", removedData);
 
           const MusicUserList = await MusicLikeRepository.find({
             relations: ["music"],
@@ -113,6 +116,7 @@ export default class MusicLikeController {
           const MusicUserList = await MusicLikeRepository.find({
             relations: ["music"],
             where: { user: findUser },
+            order: { createdat: "ASC" },
           });
 
           let sendingData: any = [];
@@ -161,6 +165,7 @@ export default class MusicLikeController {
       const MusicUserList = await MusicLikeRepository.find({
         relations: ["music"],
         where: { user: findUser },
+        order: { createdat: "ASC" },
       });
 
       let sendingData: any = [];

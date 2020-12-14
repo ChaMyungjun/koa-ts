@@ -25,7 +25,7 @@ export class Collection extends BaseEntity {
   @Column()
   description: string;
 
-  @Column()
+  @Column({ nullable: true })
   likeCount: number;
 
   @Column({ nullable: true })
