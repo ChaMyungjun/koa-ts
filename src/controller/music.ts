@@ -1,20 +1,15 @@
+/* eslint-disable prefer-const */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { BaseContext } from "koa";
 import { request, responsesAll, summary, tagsAll } from "koa-swagger-decorator";
 import { getManager, Repository } from "typeorm";
-import { validate, ValidationError } from "class-validator";
-import axios from "axios";
 
 import { User } from "../entity/user";
-import { Member, meruuid4, bookedPayment } from "../entity/member";
 
-import { Payment, uuidv4, getToken, issueBilling } from "../entity/payment";
 import { Token } from "../entity/token";
-import { Order, searchingPayment } from "../entity/order";
 import { Music } from "../entity/music";
-import { music, user } from ".";
-import { serialize } from "v8";
-import { find, findIndex, where } from "underscore";
+import { latest } from ".";
 
 @responsesAll({
   200: { description: "success" },
@@ -59,54 +54,76 @@ export default class MusicController {
       token: await tokenRepository.findOne({ token: gottenToken }),
     });
 
-    console.log(findUser);
-
     if (findUser) {
       const getMusicData = await musicRepository.findOne({
         id: ctx.request.body.music_id,
       });
-
-      // console.log(getMusicData);
-
-      // console.log(await musicRepository.find({ where: { user: findUser } }));
 
       const musicUserData = await musicRepository.find({
         relations: ["user"],
         where: { id: getMusicData.id },
       });
 
-      // console.log(musicUserData);
+      // console.log(getMusicData);
+      console.log(musicUserData);
 
+      //Music relation exclude user => undefined
+
+      let sendingData: any = [];
       musicUserData.map(async (cur, index) => {
-        // console.log("dfdffdfd", cur.user[index]);
-
-        // if (cur.user[index]?.index === findUser.index ) {
-        //   console.log("delete");
-        // } else {
-        //   console.log("add");
-        // }
-
+        console.log("dfdffdfd", cur.user[index]);
         if (cur.user[index]?.index === findUser.index) {
           // 유저의 뮤직 릴레이션 제거
           getMusicData.user = [];
           await musicRepository.save(getMusicData);
 
-          console.log("삭제relation delete", getMusicData);
+          console.log("삭제relation delete");
+
+          const findUserMusicList = await musicRepository.find({
+            relations: ["user"],
+          });
+
+          // console.log("findUserMusic", findUserMusicList);
+
+          let sendingData: any = [];
+
+          findUserMusicList.map((cur, index) => {
+            if (cur.user[index]?.index === findUser.index) {
+              console.log("success");
+              sendingData = cur.user;
+            }
+          });
+
+          console.log(sendingData);
 
           ctx.status = 204;
-          ctx.body = "유저의 뮤직 릴레이션 삭제";
-          //undefined
         } else {
           // 유저에 뮤직 릴레이션 추가
           getMusicData.user = [findUser];
           await musicRepository.save(getMusicData);
 
-          console.log("추가getMusicData", getMusicData);
+          console.log("추가getMusicData");
 
-          ctx.body = 201;
-          ctx.body = "유저의 뮤직 릴레이션 추가";
+          // const findUserMusicList = getMusicData.filter((item: any) => {
+          //   item.index !== findUser.index;
+          // });
+
+          let sendingData: any = [];
+
+          // findUserMusicList.map((cur, index) => {
+          //   console.log("cur.user : ", cur.user);
+          //   console.log("findUser :", findUser);
+          //   console.log("findUser :", findUser);
+          //   console.log("index :", cur.user.indexOf(findUser));
+          // });
+
+          console.log("sendingData", sendingData);
+
+          ctx.status = 201;
         }
       });
+
+      console.log(sendingData);
     } else {
       ctx.status = 403;
       ctx.body = { error: "token doesn't exists" };

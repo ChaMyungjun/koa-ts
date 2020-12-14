@@ -62,7 +62,7 @@ protectedRouter.post("/folder/create", folder.createFolder);
 protectedRouter.post("/folder/delete", folder.deleteFolder);
 
 //music like save
-protectedRouter.post("/music/like/save", music.musicLikeCreate);
+protectedRouter.post("/music/like/save", musicLike.createMusicLike);
 
 //latest create
 protectedRouter.post("/music/latest", latest.saveLatestMusic);

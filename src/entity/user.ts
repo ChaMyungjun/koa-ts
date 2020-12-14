@@ -59,30 +59,36 @@ export class User extends BaseEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToOne((type) => Company, (company) => company.index)
+  @OneToOne((type) => Company, (company) => company.index, {
+    onDelete: "SET NULL",
+  })
   @JoinColumn({ name: "company_index" })
   company: Company;
 
-  @OneToOne((type) => Payment, (payment) => payment.index)
+  @OneToOne((type) => Payment, (payment) => payment.index, {
+    onDelete: "SET NULL",
+  })
   @JoinColumn({ name: "payment_index" })
   payment: Payment;
 
-  @OneToOne((type) => Token, (token) => token.index)
+  @OneToOne((type) => Token, (token) => token.index, { onDelete: "SET NULL" })
   @JoinColumn({ name: "token_index" })
   token: Token;
 
-  @OneToOne((type) => Member, (member) => member.index)
+  @OneToOne((type) => Member, (member) => member.index, {
+    onDelete: "SET NULL",
+  })
   @JoinColumn({ name: "member_index" })
   member: Member;
 
   @OneToMany((type) => Folder, (folder) => folder.user, {
-    cascade: true,
+    onDelete: "SET NULL",
   })
   @JoinColumn({ name: "folder_index" })
   folder: Folder[];
 
   @OneToMany((type) => MusicLike, (musiclike) => musiclike.id, {
-    cascade: true,
+    onDelete: "SET NULL",
   })
   @JoinColumn()
   musiclike: MusicLike[];
@@ -94,10 +100,10 @@ export class User extends BaseEntity {
   @JoinColumn({ name: "latest_index" })
   latest: Latest[];
 
-  @OneToMany(() => Order, (order) => order.user)
+  @OneToMany(() => Order, (order) => order.user, { onDelete: "SET NULL" })
   order: Order[];
 
-  @ManyToMany((type) => Music, (music) => music.user, { cascade: true })
+  @ManyToMany((type) => Music, (music) => music.user, { onDelete: "SET NULL" })
   music: Music;
 }
 
