@@ -12,6 +12,8 @@ import { User } from "../entity/user";
 import { Token } from "../entity/token";
 import { validate, ValidationError } from "class-validator";
 import { music } from ".";
+import { map } from "underscore";
+import { createInflate } from "zlib";
 
 @responsesAll({
   200: { description: "success" },
@@ -45,112 +47,131 @@ export default class LatestController {
       token: await TokenRepository.findOne({ token: gottenToken }),
     });
 
-    const latestToBeSaved: Latest = new Latest();
+    if (!ctx.request.header.authorization?.split(" ")[1]) {
+      ctx.status = 100;
+      ctx.body = { message: "회원이 아닙니다" };
+    }
 
     if (findUser) {
       console.log(findUser);
 
-      if (musiclatestData) {
-        const getMusicData: any = await musicRepository.findOne({
-          id: musiclatestData,
-        });
+      const latestToBeSaved: Latest = new Latest();
 
-        latestToBeSaved.user = findUser;
-        latestToBeSaved.music = getMusicData;
+      const getMusicData: any = await musicRepository.findOne({
+        id: musiclatestData,
+      });
 
-        const errors: ValidationError[] = await validate(latestToBeSaved);
+      latestToBeSaved.user = findUser;
+      latestToBeSaved.music = getMusicData;
 
-        const findlatestUser = await latestRepository.find({
-          user: latestToBeSaved.user,
-        });
+      const errors: ValidationError[] = await validate(latestToBeSaved);
 
-        console.log(latestToBeSaved.music);
+      const findlatestUser = await latestRepository.find({
+        user: latestToBeSaved.user,
+      });
+
+      // console.log(latestToBeSaved.music);
+      // console.log(
+      //   await latestRepository.find({
+      //     relations: ["music"],
+      //     where: { index: musiclatestData },
+      //   })
+      // );
+
+      if (errors.length > 0) {
+        console.log("Error: ", errors);
+        ctx.status = 400;
+        ctx.body = errors;
+      } else if (
+        await latestRepository.findOne({
+          music: latestToBeSaved.music,
+          user: findUser,
+        })
+      ) {
+        console.log("already exists items");
+
+        ctx.status = 400;
+        ctx.body = { message: "이미 존재하는 음악입니다" };
+      } else if ((await findlatestUser.length) > 3) {
         console.log(
-          await latestRepository.find({
-            relations: ["music"],
-            where: { index: musiclatestData },
-          })
+          "min index num",
+          Math.min.apply(
+            Math,
+            findlatestUser.map((cur, index) => {
+              return cur.index;
+            })
+          )
         );
 
-        if (errors.length > 0) {
-          console.log("Error: ", errors);
-          ctx.status = 400;
-          ctx.body = errors;
-        } else if (
-          await latestRepository.findOne({ music: latestToBeSaved.music })
-        ) {
-          console.log("already exists items");
+        const latestToBeRemoved = await latestRepository.findOne({
+          index: Math.min.apply(
+            Math,
+            findlatestUser.map((cur, index) => {
+              return cur.index;
+            })
+          ),
+        });
 
-          ctx.status = 400;
-          ctx.body = { message: "이미 존재하는 음악입니다" };
-        } else if ((await findlatestUser.length) > 3) {
-          console.log(
-            "min index num",
-            Math.min.apply(
-              Math,
-              findlatestUser.map((cur, index) => {
-                return cur.index;
-              })
-            )
-          );
+        const latestRemoved = await latestRepository.remove(latestToBeRemoved);
 
-          const latestToBeRemoved = await latestRepository.findOne({
-            index: Math.min.apply(
-              Math,
-              findlatestUser.map((cur, index) => {
-                return cur.index;
-              })
-            ),
-          });
+        console.log(latestRemoved);
 
-          const latestRemoved = await latestRepository.remove(
-            latestToBeRemoved
-          );
+        const latest = await latestRepository.save(latestToBeSaved);
 
-          console.log(latestRemoved);
+        console.log("exceed length");
+        console.log(latest);
 
-          const latest = await latestRepository.save(latestToBeSaved);
+        const findMusicList = await latestRepository.find({
+          relations: ["music"],
+          where: { user: findUser },
+          order: { createdAt: "ASC" },
+        });
 
-          console.log("exceed length");
-          console.log(latest);
+        // findMusicList.map((cur, index) => {
+        //   if (cur.user === findUser) {
+        //     console.log(findMusicList);
 
-          const findMusicList = await latestRepository.find({
-            relations: ["music"],
-            where: { user: findUser },
-            order: { createdAt: "ASC" },
-          });
+        //     let sendingData: any = [];
 
-          let sendingData: any = [];
+        //     findMusicList.map((cur, index) => {
+        //       sendingData.push(cur.music);
+        //     });
 
-          findMusicList.map((cur, index) => {
-            sendingData.push(cur.music);
-          });
+        //     ctx.status = 200;
+        //     ctx.body = cur;
+        //   } else {
+        //     console.log("err");
+        //   }
+        // });
 
-          ctx.status = 200;
-          ctx.body = findMusicList;
-        } else {
-          const latest = await latestRepository.save(latestToBeSaved);
-
-          const findMusicList = await latestRepository.find({
-            relations: ["music"],
-            where: { user: findUser },
-            order: { createdAt: "ASC" },
-          });
-
-          let sendingData: any = [];
-
-          findMusicList.map((cur, index) => {
-            sendingData.push(cur.music);
-          });
-
-          console.log("saving");
-
-          ctx.status = 200;
-          ctx.body = findMusicList;
-        }
+        ctx.status = 200;
+        ctx.body = findMusicList;
       } else {
-        console.log("empty data");
-        return;
+        const latest = await latestRepository.save(latestToBeSaved);
+
+        console.log(latest);
+
+        const findMusicList = await latestRepository.find({
+          relations: ["music"],
+          where: { user: findUser },
+          order: { createdAt: "ASC" },
+        });
+
+        // findMusicList.map((cur, index) => {
+        //   console.log(cur);
+        //   console.log(findUser);
+        //   if (cur.user === findUser) {
+        //     console.log("saving");
+
+        //     ctx.status = 200;
+        //     ctx.body = cur;
+        //   } else {
+        //     console.log("err");
+        //   }
+        // });
+
+        ctx.status = 200;
+        ctx.body = findMusicList;
       }
     } else {
       console.log("token doesn't exists");
@@ -180,21 +201,39 @@ export default class LatestController {
       token: await TokenRepository.findOne({ token: gottenToken }),
     });
 
+    if (!ctx.request.header.authorization?.split(" ")[1]) {
+      ctx.status = 100;
+      ctx.body = { message: "회원이 아닙니다" };
+    }
+
     if (findUser) {
       const initMusicData = await latestRepository.find({
         relations: ["music"],
         where: { user: findUser },
-        order: {createdAt: "ASC"}
+        order: { createdAt: "ASC" },
       });
 
       let sendingData: any = [];
 
-      console.log(initMusicData);
+      // console.log(initMusicData);
 
       initMusicData.map((cur, index) => {
         console.log(cur.music);
         sendingData.push(cur.music);
       });
+
+      // initMusicData.map((cur, index) => {
+      //   console.log(cur);
+      //   // console.log(findUser);
+      //   if (cur.user === findUser) {
+      //     ctx.status = 200;
+      //     ctx.body = cur;
+      //   } else {
+      //     console.log("err");
+      //   }
+      // });
+
+      console.log(sendingData);
 
       ctx.status = 200;
       ctx.body = initMusicData;

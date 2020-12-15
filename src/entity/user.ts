@@ -98,7 +98,7 @@ export class User extends BaseEntity {
     nullable: true,
   })
   @JoinColumn({ name: "latest_index" })
-  latest: Latest[];
+  latest: Latest;
 
   @OneToMany(() => Order, (order) => order.user, { onDelete: "SET NULL" })
   order: Order[];

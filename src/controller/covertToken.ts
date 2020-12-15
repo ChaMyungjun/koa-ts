@@ -87,14 +87,21 @@ export default class TokenController {
             email: userToBeSaved.email,
           });
 
-          await tokenRepository.remove(tokenToRemove).then(async (res) => {
-            await tokenRepository.save(tokenToBeSaved);
-            console.log("tokenRepository Remove");
-          });
+          // await tokenRepository.remove(tokenToRemove).then(async (res) => {
+          //   await tokenRepository.save(tokenToBeSaved);
+          //   console.log("tokenRepository Remove");
+          // });
 
-          await userRepository.remove(userToRemove).then(async (res) => {
-            await userRepository.save(userToBeSaved);
-            console.log("userRepository Remove");
+          // await userRepository.remove(userToRemove).then(async (res) => {
+          //   await userRepository.save(userToBeSaved);
+          //   console.log("userRepository Remove");
+          // });
+
+          await tokenRepository.update(tokenToRemove.Id, {
+            token: tokenToBeSaved.token,
+          });
+          await userRepository.update(userToRemove.index, {
+            email: userToBeSaved.email,
           });
 
           console.log({ access_token, refresh_token, expires_in, name });
@@ -141,22 +148,28 @@ export default class TokenController {
         console.log("remove");
 
         //new Token
-        const tokenToRemove: Token | undefined = await tokenRepository.findOne({
+        const tokenValueRenew:
+          | Token
+          | undefined = await tokenRepository.findOne({
           Id: tokenToBeSaved.Id,
         });
 
-        const userToRemove: User | undefined = await userRepository.findOne({
-          email: userToBeSaved.email,
-        });
+        // const userToRemove: User | undefined = await userRepository.findOne({
+        //   email: userToBeSaved.email,
+        // });
 
-        await tokenRepository.remove(tokenToRemove).then(async (res) => {
-          await tokenRepository.save(tokenToBeSaved);
-          console.log("tokenRepository Remove");
-        });
+        // await tokenRepository.remove(tokenToRemove).then(async (res) => {
+        //   await tokenRepository.save(tokenToBeSaved);
+        //   console.log("tokenRepository Remove");
+        // });
 
-        await userRepository.remove(userToRemove).then(async (res) => {
-          await userRepository.save(userToBeSaved);
-          console.log("userRepository Remove");
+        // await userRepository.remove(userToRemove).then(async (res) => {
+        //   await userRepository.save(userToBeSaved);
+        //   console.log("userRepository Remove");
+        // });
+
+        await tokenRepository.update(tokenValueRenew.index, {
+          token: tokenToBeSaved.token,
         });
 
         ctx.status = 200;

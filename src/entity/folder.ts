@@ -8,6 +8,8 @@ import {
   OneToMany,
   ManyToOne,
   JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from "typeorm";
 import { Music } from "./music";
 import { User } from "./user";
@@ -23,11 +25,24 @@ export class Folder extends BaseEntity {
   @Column({ nullable: true })
   title: string;
 
-  @ManyToOne((type) => Music, (music) => music.folder)
+  @ManyToOne((type) => Music, (music) => music.folder, {
+    nullable: true,
+    onDelete: "SET NULL",
+    cascade: true,
+  })
   @JoinColumn({ name: "music_index" })
   music?: Music;
 
-  @ManyToOne((type) => User, (user) => user.folder)
+  @ManyToOne((type) => User, (user) => user.folder, {
+    nullable: true,
+    onDelete: "SET NULL",
+  })
   @JoinColumn({ name: "user_index" })
   user?: User;
+
+  @CreateDateColumn()
+  createdat: Date;
+
+  @UpdateDateColumn()
+  updatedat: Date;
 }

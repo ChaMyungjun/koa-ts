@@ -21,10 +21,14 @@ export class MusicLike extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ nullable: true })
-  like: boolean;
+  // @Column({ nullable: true })
+  // like: boolean;
 
-  @ManyToOne((type) => User, (user) => user.musiclike)
+  @ManyToOne((type) => User, (user) => user.musiclike, {
+    cascade: true,
+    onDelete: "SET NULL",
+    nullable: true,
+  })
   @JoinColumn()
   user: User;
 

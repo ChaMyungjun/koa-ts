@@ -3,13 +3,15 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { BaseContext } from "koa";
 import { request, responsesAll, summary, tagsAll } from "koa-swagger-decorator";
-import { getManager, Repository } from "typeorm";
+import { ChangeStream, getManager, Repository } from "typeorm";
 
 import { User } from "../entity/user";
 
 import { Token } from "../entity/token";
 import { Music } from "../entity/music";
-import { latest } from ".";
+import { latest, musicLike } from ".";
+import { MusicLike } from "../entity/musicLike";
+import { count } from "console";
 
 @responsesAll({
   200: { description: "success" },
@@ -26,13 +28,69 @@ export default class MusicController {
       Music
     );
 
+    const MusicLikeRepository: Repository<MusicLike> = await getManager().getRepository(
+      MusicLike
+    );
+
+    const UserRepository: Repository<User> = await getManager().getRepository(
+      User
+    );
+
+    const TokenRepository: Repository<Token> = await getManager().getRepository(
+      Token
+    );
+
+    // console.log(ctx.request);
+
     const findMusic = await musicRepository.find();
-    console.log(findMusic);
+    // console.log(findMusic);
 
-    ctx.status = 200;
-    ctx.body = findMusic;
+    if (ctx.request.header.authorization?.split(" ")[1]) {
+      const findUser = await UserRepository.findOne({
+        token: await TokenRepository.findOne({
+          token: ctx.request.header.authorization.split(" ")[1],
+        }),
+      });
 
-    console.log("Getting Music");
+      console.log(findUser);
+
+      const findMusicLike = await MusicLikeRepository.find({
+        relations: ["music"],
+        where: { user: findUser },
+      });
+
+      // console.log(findMusicLike);
+
+      let sendingData: any = [];
+      let counter = 0;
+
+      findMusic.map((cur, index) => {
+        const data = { 
+          ...cur,
+          isLike: findMusicLike.findIndex(ml => ml.music.id === findMusic[index].id) !== -1
+         };
+        // console.log(findMusicLike[index]?.music.id);
+        // console.log(cur.id);
+        // if (findMusic[index].id === findMusicLike[counter]?.music.id) {
+        //   sendingData.push(findMusic[index].like = findMusicLike[counter].like)
+        //   counter++;
+        // } else {
+        //   sendingData.push(cur);
+        // }
+
+        sendingData.push(data);
+      });
+
+      // console.log(sendingData);
+
+      ctx.status = 200;
+      ctx.body = sendingData;
+    } else {
+      ctx.status = 200;
+      ctx.body = findMusic;
+
+      console.log("Getting Music");
+    }
   }
 
   @request("post", "/music/like/save")

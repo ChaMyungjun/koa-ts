@@ -55,11 +55,9 @@ export default class MusicLikeController {
         console.log(getLikeData);
 
         const musicLikeToBeSaved: MusicLike = new MusicLike();
-        const likeStatus = ctx.request.body.like;
 
         musicLikeToBeSaved.music = getMusicData;
         musicLikeToBeSaved.user = findUser;
-        musicLikeToBeSaved.like = likeStatus;
 
         console.log("get Music Data", getMusicData);
 
@@ -79,10 +77,6 @@ export default class MusicLikeController {
 
           console.log("findMusicData: ", findMusicData);
 
-          await MusicLikeRepository.update(findMusicData.id, {
-            like: false,
-          });
-
           const removedData = await MusicLikeRepository.remove(findMusicData);
           console.log("removed Data", removedData);
 
@@ -94,7 +88,7 @@ export default class MusicLikeController {
           let sendingData: any = [];
 
           MusicUserList.map((cur, index) => {
-            sendingData.push(cur.music, cur.like);
+            sendingData.push(cur.music);
           });
 
           console.log(sendingData);
@@ -122,13 +116,24 @@ export default class MusicLikeController {
           let sendingData: any = [];
 
           MusicUserList.map((cur, index) => {
-            sendingData.push(cur.music, cur.like);
+            const data = {
+              ...cur,
+              isLike: true,
+            };
+
+            sendingData.push(data);
           });
 
-          console.log("MusicUserList", MusicUserList);
+          // let sendingData: any = [];
+
+          // MusicUserList.map((cur, index) => {
+          //   sendingData.push(cur.music);
+          // });
+
+          // console.log("MusicUserList", MusicUserList);
 
           ctx.status = 201;
-          ctx.body = MusicUserList;
+          ctx.body = sendingData;
         }
       } else {
         console.log("product doesn't exists");
@@ -166,12 +171,6 @@ export default class MusicLikeController {
         relations: ["music"],
         where: { user: findUser },
         order: { createdat: "ASC" },
-      });
-
-      let sendingData: any = [];
-
-      MusicUserList.map((cur, index) => {
-        sendingData.push(cur.music, cur.like);
       });
 
       ctx.status = 200;

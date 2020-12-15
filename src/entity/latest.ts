@@ -27,9 +27,13 @@ export class Latest extends BaseEntity {
   @JoinColumn({ name: "user_index" })
   user: User;
 
-  @ManyToOne((type) => Music, (music) => music.latest)
+  @ManyToOne((type) => Music, (music) => music.latest, {
+    cascade: true,
+    onDelete: "SET NULL",
+    nullable: true,
+  })
   @JoinColumn()
-  music: Music[];
+  music: Music;
 
   @CreateDateColumn()
   createdAt: Date;
