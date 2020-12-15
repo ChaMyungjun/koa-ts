@@ -1,21 +1,21 @@
 import Router from "@koa/router";
-import { general, latest, music, musicLike } from "./controller";
+import { general, latest, music, musicLike, folder } from "./controller";
 
 const unprotectedRouter = new Router();
 
 // Hello World route
 unprotectedRouter.get("/", general.helloWorld);
 
-//music find
+//music list
 unprotectedRouter.get("/music/find", music.gettingMusicInfo);
 
-//music latest find
+//music playlist
 unprotectedRouter.get("/music/latest", latest.initLatestMusic);
 
-//musi like save
+//music like save
 unprotectedRouter.get("/music/like/save", musicLike.listMusicLike);
 
-//test route
-// unprotectedRouter.get("/test", test.testing);
+//music folder list
+unprotectedRouter.get("/music/folder/find", folder.listFolder);
 
 export { unprotectedRouter };

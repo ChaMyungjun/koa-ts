@@ -36,6 +36,7 @@ export class Folder extends BaseEntity {
   @ManyToOne((type) => User, (user) => user.folder, {
     nullable: true,
     onDelete: "SET NULL",
+    cascade: true,
   })
   @JoinColumn({ name: "user_index" })
   user?: User;

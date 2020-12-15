@@ -122,7 +122,7 @@ export default class FolderController {
       // );
 
       if (
-        await FolderReposiotry.findOne({ music: getMusicData, user: findUser })
+        await FolderReposiotry.findOne({ music: findFolder.music, user: findUser })
       ) {
         const UserFolderList = await FolderReposiotry.find({
           relations: ["music"],
@@ -139,8 +139,8 @@ export default class FolderController {
         console.log("Music Folder List", UserFolderList);
         // console.log("UserFolderList Music ", sendingData);
 
-        ctx.status = 200;
-        ctx.body = UserFolderList;
+        ctx.status = 400;
+        ctx.body = {error: "music already exists"};
       } else {
         await FolderReposiotry.save(findFolder);
 
@@ -151,7 +151,7 @@ export default class FolderController {
         });
 
         UserFolderList.map((cur, index) => {
-          console.log("musi mapping data", cur);
+          console.log("music mapping data", cur);
         });
 
         ctx.status = 200;
@@ -163,7 +163,7 @@ export default class FolderController {
     }
   }
 
-  @request("get", "/folder/init")
+  @request("get", "/folder/find")
   @summary("init folder list")
   public static async listFolder(ctx: BaseContext): Promise<void> {
     const UserRepository: Repository<User> = getManager().getRepository(User);
@@ -175,9 +175,9 @@ export default class FolderController {
       Folder
     );
 
-    const MusicRepository: Repository<Music> = getManager().getRepository(
-      Music
-    );
+    // const MusicRepository: Repository<Music> = getManager().getRepository(
+    //   Music
+    // );
 
     const gottenToken = ctx.request.header.authorization.split(" ")[1];
 
