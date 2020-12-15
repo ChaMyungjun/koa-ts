@@ -196,7 +196,7 @@ export default class UserController {
       Token
     );
     //const companyRepositoyry: Repository<Company> = getManager().getRepository(Company);
-    const gottenToken = ctx.request.body.token;
+    const gottenToken = ctx.request.header.authorization.split(" ")[1];
     const userToBeUpdate = await userRepository.findOne({
       token: await tokenRepository.findOne({ token: gottenToken }),
     });

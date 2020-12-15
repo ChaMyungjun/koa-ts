@@ -59,12 +59,24 @@ export default class FolderController {
 
       console.log("product doesn't exits");
 
-      const folder = await FolderReposiotry.save(FoldToBeSaved);
+      const errors: ValidationError[] = await validate(FoldToBeSaved);
 
-      console.log(folder);
+      if (errors.length > 0) {
+        ctx.status = 400;
+        ctx.body = errors;
+      } else if (
+        await FolderReposiotry.findOne({ title: FoldToBeSaved.title })
+      ) {
+        ctx.status = 400;
+        ctx.body = { error: "title name already exists" };
+      } else {
+        const folder = await FolderReposiotry.save(FoldToBeSaved);
 
-      ctx.status = 200;
-      ctx.body = { message: "create folder" };
+        console.log(folder);
+
+        ctx.status = 200;
+        ctx.body = { message: "create folder" };
+      }
     } else {
       ctx.status = 403;
       ctx.body = { error: "token doesn't exist" };
@@ -102,16 +114,19 @@ export default class FolderController {
       findFolder.music = getMusicData;
       findFolder.memo = ctx.request.body?.memo;
 
-      console.log(
-        await FolderReposiotry.find({
-          relations: ["music"],
-          where: { user: findUser },
-        })
-      );
+      // console.log(
+      //   await FolderReposiotry.find({
+      //     relations: ["music"],
+      //     where: { user: findUser },
+      //   })
+      // );
 
-      if (await FolderReposiotry.findOne({ music: getMusicData })) {
+      if (
+        await FolderReposiotry.findOne({ music: getMusicData, user: findUser })
+      ) {
         const UserFolderList = await FolderReposiotry.find({
           relations: ["music"],
+          where: { user: findUser },
           order: { createdat: "ASC" },
         });
 
@@ -131,22 +146,17 @@ export default class FolderController {
 
         const UserFolderList = await FolderReposiotry.find({
           relations: ["music"],
+          where: { user: findUser },
           order: { createdat: "ASC" },
         });
 
-        let sendingData: any = [];
-
         UserFolderList.map((cur, index) => {
-          sendingData.push(cur);
+          console.log("musi mapping data", cur);
         });
-
-        console.log("UserFolderList Music ", sendingData);
 
         ctx.status = 200;
         ctx.body = UserFolderList;
       }
-
-      console.log(findFolder);
     } else {
       ctx.status = 403;
       ctx.body = { error: "token doesn't exists" };
@@ -177,7 +187,9 @@ export default class FolderController {
 
     if (findUser) {
       const FolderList = await FolderReposiotry.find({
-        user: findUser,
+        relations: ["music"],
+        where: {user: findUser},
+        order: {createdat: "ASC"}
       });
 
       console.log(FolderList);

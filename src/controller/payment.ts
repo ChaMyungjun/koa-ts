@@ -247,7 +247,7 @@ export default class PaymentController {
 
     const meruuid = await meruuid4();
 
-    const gottenToken = ctx.request.body.token;
+    const gottenToken = ctx.request.header.authorization.split(" ")[1];
     const gottenProduct = ctx.request.body.product;
 
     const findUser = await userRepository.findOne({
