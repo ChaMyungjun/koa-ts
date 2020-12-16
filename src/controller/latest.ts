@@ -41,7 +41,7 @@ export default class LatestController {
 
     console.log("request", ctx.request.body);
 
-    const gottenToken = ctx.request.header.authorization.split(" ")[1];
+    const gottenToken = ctx.request.header.authorization?.split(" ")[1];
     const musiclatestData = ctx.request.body.music_id;
     const findUser = await UserRepository.findOne({
       token: await TokenRepository.findOne({ token: gottenToken }),
@@ -92,7 +92,7 @@ export default class LatestController {
 
         ctx.status = 400;
         ctx.body = { message: "이미 존재하는 음악입니다" };
-      } else if ((await findlatestUser.length) > 3) {
+      } else if ((await findlatestUser.length) > 29) {
         console.log(
           "min index num",
           Math.min.apply(
@@ -216,11 +216,6 @@ export default class LatestController {
       let sendingData: any = [];
 
       // console.log(initMusicData);
-
-      initMusicData.map((cur, index) => {
-        console.log(cur.music);
-        sendingData.push(cur.music);
-      });
 
       // initMusicData.map((cur, index) => {
       //   console.log(cur);

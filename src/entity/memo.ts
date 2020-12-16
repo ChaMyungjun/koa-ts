@@ -12,28 +12,25 @@ import {
   UpdateDateColumn,
   ManyToMany,
 } from "typeorm";
-import { FolderMusic } from "./memo";
+import { Folder } from "./folder";
 import { Music } from "./music";
 import { User } from "./user";
 
 @Entity()
-export class Folder extends BaseEntity {
+export class FolderMusic extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column({ nullable: true })
-  title: string;
+  memo: string;
 
-  @ManyToOne((type) => User, (user) => user.folder)
-  @JoinColumn({ name: "user_index" })
-  user?: User;
+  @ManyToOne((type) => Music, (music) => music.folderMusic)
+  @JoinColumn({ name: "music_index" })
+  music?: Music;
 
-  @OneToMany((type) => FolderMusic, (folderMusic) => folderMusic.folder, {
-    onDelete: "SET NULL",
-    cascade: true,
-  })
-  @JoinColumn({ name: "memo_index" })
-  folderMusic?: FolderMusic;
+  @ManyToOne((type) => Folder, (folder) => folder.folderMusic)
+  @JoinColumn({ name: "folder_index" })
+  folder?: Folder;
 
   @CreateDateColumn()
   createdat: Date;

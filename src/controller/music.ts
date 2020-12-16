@@ -12,6 +12,7 @@ import { Music } from "../entity/music";
 import { latest, musicLike } from ".";
 import { MusicLike } from "../entity/musicLike";
 import { count } from "console";
+import { Folder } from "../entity/folder";
 
 @responsesAll({
   200: { description: "success" },
@@ -40,6 +41,10 @@ export default class MusicController {
       Token
     );
 
+    const FolderReposiotry: Repository<Folder> = await getManager().getRepository(
+      Folder
+    );
+
     // console.log(ctx.request);
 
     const findMusic = await musicRepository.find();
@@ -59,16 +64,28 @@ export default class MusicController {
         where: { user: findUser },
       });
 
+      const findMusicFile = await FolderReposiotry.find({
+        relations: ["music"],
+        where: { user: findUser },
+      });
+
       // console.log(findMusicLike);
 
       let sendingData: any = [];
       let counter = 0;
 
       findMusic.map((cur, index) => {
-        const data = { 
+        const data = {
           ...cur,
-          isLike: findMusicLike.findIndex(ml => ml.music.id === findMusic[index].id) !== -1
-         };
+          isLike:
+            findMusicLike.findIndex(
+              (ml) => ml.music.id === findMusic[index].id
+            ) !== -1,
+
+          //isFile: findMusicFile.findIndex((ml) => ml.music !== null) !== -1,
+          // isFile:
+          // isFile: cur.music === null ? null : true,
+        };
         // console.log(findMusicLike[index]?.music.id);
         // console.log(cur.id);
         // if (findMusic[index].id === findMusicLike[counter]?.music.id) {
@@ -93,98 +110,98 @@ export default class MusicController {
     }
   }
 
-  @request("post", "/music/like/save")
-  @summary("testing")
-  public static async musicLikeCreate(ctx: BaseContext): Promise<void> {
-    const musicRepository: Repository<Music> = await getManager().getRepository(
-      Music
-    );
-    const userRepository: Repository<User> = await getManager().getRepository(
-      User
-    );
-    const tokenRepository: Repository<Token> = await getManager().getRepository(
-      Token
-    );
+  // @request("post", "/music/like/save")
+  // @summary("testing")
+  // public static async musicLikeCreate(ctx: BaseContext): Promise<void> {
+  //   const musicRepository: Repository<Music> = await getManager().getRepository(
+  //     Music
+  //   );
+  //   const userRepository: Repository<User> = await getManager().getRepository(
+  //     User
+  //   );
+  //   const tokenRepository: Repository<Token> = await getManager().getRepository(
+  //     Token
+  //   );
 
-    const gottenToken = ctx.request.header.authorization.split(" ")[1];
+  //   const gottenToken = ctx.request.header.authorization.split(" ")[1];
 
-    const findUser = await userRepository.findOne({
-      token: await tokenRepository.findOne({ token: gottenToken }),
-    });
+  //   const findUser = await userRepository.findOne({
+  //     token: await tokenRepository.findOne({ token: gottenToken }),
+  //   });
 
-    if (findUser) {
-      const getMusicData = await musicRepository.findOne({
-        id: ctx.request.body.music_id,
-      });
+  //   if (findUser) {
+  //     const getMusicData = await musicRepository.findOne({
+  //       id: ctx.request.body.music_id,
+  //     });
 
-      const musicUserData = await musicRepository.find({
-        relations: ["user"],
-        where: { id: getMusicData.id },
-      });
+  //     const musicUserData = await musicRepository.find({
+  //       relations: ["user"],
+  //       where: { id: getMusicData.id },
+  //     });
 
-      // console.log(getMusicData);
-      console.log(musicUserData);
+  //     // console.log(getMusicData);
+  //     console.log(musicUserData);
 
-      //Music relation exclude user => undefined
+  //     //Music relation exclude user => undefined
 
-      let sendingData: any = [];
-      musicUserData.map(async (cur, index) => {
-        console.log("dfdffdfd", cur.user[index]);
-        if (cur.user[index]?.index === findUser.index) {
-          // 유저의 뮤직 릴레이션 제거
-          getMusicData.user = [];
-          await musicRepository.save(getMusicData);
+  //     let sendingData: any = [];
+  //     musicUserData.map(async (cur, index) => {
+  //       console.log("dfdffdfd", cur.user[index]);
+  //       if (cur.user[index]?.index === findUser.index) {
+  //         // 유저의 뮤직 릴레이션 제거
+  //         getMusicData.user = [];
+  //         await musicRepository.save(getMusicData);
 
-          console.log("삭제relation delete");
+  //         console.log("삭제relation delete");
 
-          const findUserMusicList = await musicRepository.find({
-            relations: ["user"],
-          });
+  //         const findUserMusicList = await musicRepository.find({
+  //           relations: ["user"],
+  //         });
 
-          // console.log("findUserMusic", findUserMusicList);
+  //         // console.log("findUserMusic", findUserMusicList);
 
-          let sendingData: any = [];
+  //         let sendingData: any = [];
 
-          findUserMusicList.map((cur, index) => {
-            if (cur.user[index]?.index === findUser.index) {
-              console.log("success");
-              sendingData = cur.user;
-            }
-          });
+  //         findUserMusicList.map((cur, index) => {
+  //           if (cur.user[index]?.index === findUser.index) {
+  //             console.log("success");
+  //             sendingData = cur.user;
+  //           }
+  //         });
 
-          console.log(sendingData);
+  //         console.log(sendingData);
 
-          ctx.status = 204;
-        } else {
-          // 유저에 뮤직 릴레이션 추가
-          getMusicData.user = [findUser];
-          await musicRepository.save(getMusicData);
+  //         ctx.status = 204;
+  //       } else {
+  //         // 유저에 뮤직 릴레이션 추가
+  //         getMusicData.user = [findUser];
+  //         await musicRepository.save(getMusicData);
 
-          console.log("추가getMusicData");
+  //         console.log("추가getMusicData");
 
-          // const findUserMusicList = getMusicData.filter((item: any) => {
-          //   item.index !== findUser.index;
-          // });
+  //         // const findUserMusicList = getMusicData.filter((item: any) => {
+  //         //   item.index !== findUser.index;
+  //         // });
 
-          let sendingData: any = [];
+  //         let sendingData: any = [];
 
-          // findUserMusicList.map((cur, index) => {
-          //   console.log("cur.user : ", cur.user);
-          //   console.log("findUser :", findUser);
-          //   console.log("findUser :", findUser);
-          //   console.log("index :", cur.user.indexOf(findUser));
-          // });
+  //         // findUserMusicList.map((cur, index) => {
+  //         //   console.log("cur.user : ", cur.user);
+  //         //   console.log("findUser :", findUser);
+  //         //   console.log("findUser :", findUser);
+  //         //   console.log("index :", cur.user.indexOf(findUser));
+  //         // });
 
-          console.log("sendingData", sendingData);
+  //         console.log("sendingData", sendingData);
 
-          ctx.status = 201;
-        }
-      });
+  //         ctx.status = 201;
+  //       }
+  //     });
 
-      console.log(sendingData);
-    } else {
-      ctx.status = 403;
-      ctx.body = { error: "token doesn't exists" };
-    }
-  }
+  //     console.log(sendingData);
+  //   } else {
+  //     ctx.status = 403;
+  //     ctx.body = { error: "token doesn't exists" };
+  //   }
+  // }
 }

@@ -20,6 +20,7 @@ import {
 } from "typeorm";
 import { Folder } from "./folder";
 import { Latest } from "./latest";
+import { FolderMusic } from "./memo";
 import { MusicLike } from "./musicLike";
 import { User } from "./user";
 
@@ -53,13 +54,20 @@ export class Music extends BaseEntity {
   @JoinColumn({ name: "musicliked_index" })
   musiclike: MusicLike;
 
-  @OneToMany((type) => Folder, (folder) => folder.music)
-  @JoinColumn({ name: "folder_index" })
-  folder: Folder;
+  // @OneToMany((type) => Folder, (folder) => folder.music)
+  // @JoinColumn({ name: "folder_index" })
+  // folder: Folder;
+
+  @OneToMany((type) => FolderMusic, (folderMusic) => folderMusic.music, {
+    cascade: true,
+    onDelete: "SET NULL",
+  })
+  @JoinColumn({ name: "memo_index" })
+  folderMusic: FolderMusic;
 
   @OneToMany((type) => Latest, (latest) => latest.music)
   @JoinColumn({ name: "latest_index" })
-  latest: Latest;
+  latest: Latest[];
 
   @ManyToMany((type) => User, (user) => user.music)
   @JoinTable({ name: "user_index" })

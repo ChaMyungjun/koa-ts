@@ -2,15 +2,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { BaseContext } from "koa";
-import { getManager, Repository } from "typeorm";
+import { AdvancedConsoleLogger, getManager, Repository } from "typeorm";
 import { validate, ValidationError } from "class-validator";
 import { request, summary, responsesAll, tagsAll } from "koa-swagger-decorator";
 import { Token } from "../entity/token";
 import { User } from "../entity/user";
 import { Folder } from "../entity/folder";
 import { Music } from "../entity/music";
-import { folder, music, user } from ".";
 import { send } from "process";
+import { find } from "shelljs";
+import { FolderMusic } from "../entity/memo";
+import { folder } from ".";
 
 @responsesAll({
   200: { descriptoin: "success" },
@@ -19,7 +21,7 @@ import { send } from "process";
 })
 @tagsAll(["Folder"])
 export default class FolderController {
-  @request("post", "/folder/create")
+  @request("post", "/music/folder/create")
   @summary("create folder")
   public static async createFolder(ctx: BaseContext): Promise<void> {
     // console.log(ctx.request.body);
@@ -34,10 +36,11 @@ export default class FolderController {
       Music
     );
 
-    console.log(ctx.request);
-
     const gottenToken = ctx.request.header.authorization.split(" ")[1];
     console.log(gottenToken);
+
+    console.log("title", ctx.request.body.title);
+
     const folderData = ctx.request.body.product;
     const memoData = ctx.request.body.memo;
     const title = ctx.request.body.title;
@@ -62,20 +65,25 @@ export default class FolderController {
       const errors: ValidationError[] = await validate(FoldToBeSaved);
 
       if (errors.length > 0) {
+        console.log("first");
         ctx.status = 400;
         ctx.body = errors;
       } else if (
         await FolderReposiotry.findOne({ title: FoldToBeSaved.title })
       ) {
+        console.log("seconde");
         ctx.status = 400;
-        ctx.body = { error: "title name already exists" };
+        ctx.body = { error: "이미 존재하는 폴더 이름 입니다." };
+      } else if (!title) {
+        ctx.status = 400;
+        ctx.body = { error: "폴더 이름이 없습니다." };
       } else {
         const folder = await FolderReposiotry.save(FoldToBeSaved);
 
         console.log(folder);
 
         ctx.status = 200;
-        ctx.body = { message: "create folder" };
+        ctx.body = { message: "created" };
       }
     } else {
       ctx.status = 403;
@@ -83,7 +91,7 @@ export default class FolderController {
     }
   }
 
-  @request("post", "/folder/music/add")
+  @request("post", "/music/folder/add")
   @summary("add music in folder")
   public static async deleteFolder(ctx: BaseContext): Promise<void> {
     const UserRepository: Repository<User> = getManager().getRepository(User);
@@ -97,8 +105,13 @@ export default class FolderController {
       Music
     );
 
+    const MemoRepository: Repository<FolderMusic> = getManager().getRepository(
+      FolderMusic
+    );
+
     const gottenToken = ctx.request.header.authorization.split(" ")[1];
-    const musicId = ctx.request.body.music_id;
+    const musicId = ctx.request.body.songId;
+    const folderID = ctx.request.body.folderId;
 
     const findUser = await UserRepository.findOne({
       token: await TokenRepository.findOne({ token: gottenToken }),
@@ -106,53 +119,91 @@ export default class FolderController {
 
     if (findUser) {
       const getMusicData = await MusicRepository.findOne({ id: musicId });
-      const findFolder = await FolderReposiotry.findOne({ user: findUser });
+      const findFolder = await FolderReposiotry.findOne({
+        id: folderID,
+      });
+
+      console.log("findFoler checking", findFolder);
+
+      const folderMusicToBeSaved = new Folder();
 
       console.log("get Music Data", getMusicData);
-      console.log("find Folder", findFolder);
+      console.log("find Folder", findFolder.user);
 
-      findFolder.music = getMusicData;
-      findFolder.memo = ctx.request.body?.memo;
+      // folderMusicToBeSaved.title = findFolder.title;
+      // folderMusicToBeSaved.user = findFolder.user;
+      // folderMusicToBeSaved.memo = ctx.request.body?.memo;
+      // folderMusicToBeSaved.music = getMusicData;
 
-      // console.log(
-      //   await FolderReposiotry.find({
-      //     relations: ["music"],
-      //     where: { user: findUser },
-      //   })
-      // );
+      const memoToBeSaved = new FolderMusic();
+
+      memoToBeSaved.memo = ctx.request.body.memo;
+      memoToBeSaved.music = getMusicData;
+      // memoToBeSaved.folder = findFolder;
+
+      console.log("saved muisc data", memoToBeSaved.music);
+
+      console.log(
+        "chekcing",
+        await MemoRepository.find({
+          // folder: await FolderReposiotry.findOne({ user: findUser }),
+          music: memoToBeSaved.music,
+        })
+      );
 
       if (
-        await FolderReposiotry.findOne({ music: findFolder.music, user: findUser })
+        // await MemoRepository.find({
+        //   music: memoToBeSaved.music,
+        //   folder: await FolderReposiotry.findOne({ user: findUser }),
+        // })
+
+        // await FolderReposiotry.findOne({
+        //   user: findUser,
+        //   music: findFolder.music,
+        // })
+        false
       ) {
-        const UserFolderList = await FolderReposiotry.find({
-          relations: ["music"],
-          where: { user: findUser },
-          order: { createdat: "ASC" },
-        });
+        // const UserFolderList = await FolderReposiotry.find({
+        //   relations: ["music"],
+        //   where: { user: findUser },
+        //   order: { createdat: "ASC" },
+        // });
 
         // let sendingData: any = [];
 
-        UserFolderList.map((cur, index) => {
-          console.log("music mapping data", cur);
-        });
+        // UserFolderList.map((cur, index) => {
+        //   console.log("music mapping data", cur);
+        // });
 
-        console.log("Music Folder List", UserFolderList);
+        // console.log("Music Folder List", UserFolderList);
         // console.log("UserFolderList Music ", sendingData);
 
         ctx.status = 400;
-        ctx.body = {error: "music already exists"};
+        ctx.body = { error: "음악이 현재 폴더 들어 있습니다." };
       } else {
-        await FolderReposiotry.save(findFolder);
+        const memo = await MemoRepository.save(memoToBeSaved);
+        const fold = await FolderReposiotry.save(findFolder);
+
+        console.log("saving Value fold", fold);
+        console.log("saving value memo", memo);
 
         const UserFolderList = await FolderReposiotry.find({
-          relations: ["music"],
+          relations: ["memo"],
           where: { user: findUser },
-          order: { createdat: "ASC" },
         });
 
-        UserFolderList.map((cur, index) => {
-          console.log("music mapping data", cur);
-        });
+        let sendingData: any = [];
+
+        // UserFolderList.map((cur, index) => {
+        //   const data: any = {
+        //     ...cur,
+        //     memo: cur.memo === null ? null : cur.memo,
+        //   };
+
+        //   sendingData.push(data);
+        // });
+
+        console.log(UserFolderList);
 
         ctx.status = 200;
         ctx.body = UserFolderList;
@@ -163,7 +214,7 @@ export default class FolderController {
     }
   }
 
-  @request("get", "/folder/find")
+  @request("get", "/music/folder/find")
   @summary("init folder list")
   public static async listFolder(ctx: BaseContext): Promise<void> {
     const UserRepository: Repository<User> = getManager().getRepository(User);
@@ -174,6 +225,8 @@ export default class FolderController {
     const FolderReposiotry: Repository<Folder> = getManager().getRepository(
       Folder
     );
+
+    const MemoRepository: Repository<FolderMusic> = getManager().getRepository(FolderMusic);
 
     // const MusicRepository: Repository<Music> = getManager().getRepository(
     //   Music
@@ -187,16 +240,32 @@ export default class FolderController {
 
     if (findUser) {
       const FolderList = await FolderReposiotry.find({
-        relations: ["music"],
-        where: {user: findUser},
-        order: {createdat: "ASC"}
+        relations: ["memo"],
+        where: { user: findUser },
       });
 
-      console.log(FolderList);
+      const MemoList = await MemoRepository.find({
+        relations: ["music"],
+        where: { user: findUser },
+      });
+
+      let sendingData: any = [];
+
+      FolderList.map((cur, index) => {
+        const data: any = {
+          ...cur,
+          // music: cur.memo.music,
+        };
+
+        sendingData.push(data);
+      });
+
+      console.log(sendingData);
 
       ctx.status = 200;
-      ctx.body = FolderList;
+      ctx.body = MemoList;
     } else {
+      console.log("token doesn't exists");
       ctx.status = 403;
       ctx.body = { error: "token doesn't exists" };
     }

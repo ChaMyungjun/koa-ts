@@ -28,6 +28,7 @@ import { Order } from "./order";
 import { MusicLike } from "./musicLike";
 import { Latest } from "./latest";
 import { Music } from "./music";
+import { FolderMusic } from "./memo";
 
 @Entity()
 export class User extends BaseEntity {
@@ -83,6 +84,7 @@ export class User extends BaseEntity {
 
   @OneToMany((type) => Folder, (folder) => folder.user, {
     onDelete: "SET NULL",
+    cascade: true,
   })
   @JoinColumn({ name: "folder_index" })
   folder: Folder[];
@@ -98,10 +100,14 @@ export class User extends BaseEntity {
     nullable: true,
   })
   @JoinColumn({ name: "latest_index" })
-  latest: Latest;
+  latest: Latest[];
 
   @OneToMany(() => Order, (order) => order.user, { onDelete: "SET NULL" })
   order: Order[];
+
+  // @OneToMany((type) => FolderMusic, (memo) => memo.user)
+  // @JoinColumn({ name: "memo_index" })
+  // memo: FolderMusic;
 
   @ManyToMany((type) => Music, (music) => music.user, { onDelete: "SET NULL" })
   music: Music;

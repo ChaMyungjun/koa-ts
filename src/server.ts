@@ -31,6 +31,7 @@ import { Collection } from "./entity/collection";
 import { Folder } from "./entity/folder";
 import { MusicLike } from "./entity/musicLike";
 import { Latest } from "./entity/latest";
+import { FolderMusic } from "./entity/memo";
 
 Resource.validate = validate;
 
@@ -189,6 +190,15 @@ try {
           },
           {
             resource: Latest,
+            options: {
+              parent: {
+                name: "Superitend Music",
+              },
+              navigation: MusicNavigation,
+            },
+          },
+          {
+            resource: FolderMusic,
             options: {
               parent: {
                 name: "Superitend Music",

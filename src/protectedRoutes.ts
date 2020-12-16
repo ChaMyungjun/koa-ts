@@ -56,10 +56,10 @@ protectedRouter.post("/payment/order/callback", payment.normalPaymentCallback);
 // protectedRouter.post()
 
 //folder create
-protectedRouter.post("/folder/create", folder.createFolder);
+protectedRouter.post("/music/folder/create", folder.createFolder);
 
 //folder delete
-protectedRouter.post("/folder/delete", folder.deleteFolder);
+protectedRouter.post("/music/folder/delete", folder.deleteFolder);
 
 //music like save
 protectedRouter.post("/music/like/save", musicLike.createMusicLike);
