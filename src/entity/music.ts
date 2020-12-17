@@ -58,10 +58,7 @@ export class Music extends BaseEntity {
   // @JoinColumn({ name: "folder_index" })
   // folder: Folder;
 
-  @OneToMany((type) => FolderMusic, (folderMusic) => folderMusic.music, {
-    cascade: true,
-    onDelete: "SET NULL",
-  })
+  @OneToMany((type) => FolderMusic, (folderMusic) => folderMusic.music)
   @JoinColumn({ name: "memo_index" })
   folderMusic: FolderMusic;
 
@@ -69,9 +66,9 @@ export class Music extends BaseEntity {
   @JoinColumn({ name: "latest_index" })
   latest: Latest[];
 
-  @ManyToMany((type) => User, (user) => user.music)
-  @JoinTable({ name: "user_index" })
-  user: User[];
+  // @ManyToMany((type) => User, (user) => user.music)
+  // @JoinTable({ name: "user_index" })
+  // user: User[];
 
   @CreateDateColumn()
   createdat: Date;

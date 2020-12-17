@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/camelcase */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -121,6 +122,26 @@ export async function naverGenerateProfile(access_token: any) {
     });
   console.log(data);
 
+  return data;
+}
+
+export async function kakaoCheck(token: any) {
+  console.log(token);
+  const CHECK_KAKAO_TOKEN = "https://kapi.kakao.com/v1/user/access_token_info";
+  let data: any = null;
+
+  await axios
+    .get(CHECK_KAKAO_TOKEN, {
+      headers: { Authorization: `Bearer: ${token}` },
+    })
+    .then((res) => {
+      data = res.data;
+    })
+    .catch((err) => {
+      console.error("Error: ", err);
+    });
+
+  console.log(data);
   return data;
 }
 

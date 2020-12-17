@@ -72,7 +72,10 @@ export class User extends BaseEntity {
   @JoinColumn({ name: "payment_index" })
   payment: Payment;
 
-  @OneToOne((type) => Token, (token) => token.index, { onDelete: "SET NULL" })
+  @OneToOne((type) => Token, (token) => token.index, {
+    onDelete: "SET NULL",
+    cascade: true,
+  })
   @JoinColumn({ name: "token_index" })
   token: Token;
 
@@ -82,10 +85,7 @@ export class User extends BaseEntity {
   @JoinColumn({ name: "member_index" })
   member: Member;
 
-  @OneToMany((type) => Folder, (folder) => folder.user, {
-    onDelete: "SET NULL",
-    cascade: true,
-  })
+  @OneToMany((type) => Folder, (folder) => folder.user)
   @JoinColumn({ name: "folder_index" })
   folder: Folder[];
 
@@ -105,12 +105,8 @@ export class User extends BaseEntity {
   @OneToMany(() => Order, (order) => order.user, { onDelete: "SET NULL" })
   order: Order[];
 
-  // @OneToMany((type) => FolderMusic, (memo) => memo.user)
-  // @JoinColumn({ name: "memo_index" })
-  // memo: FolderMusic;
-
-  @ManyToMany((type) => Music, (music) => music.user, { onDelete: "SET NULL" })
-  music: Music;
+  // @ManyToMany((type) => Music, (music) => music.user, { onDelete: "SET NULL" })
+  // music: Music;
 }
 
 export const userSchema = {

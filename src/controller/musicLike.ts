@@ -40,9 +40,17 @@ export default class MusicLikeController {
     const gottenToken = ctx.request.header.authorization.split(" ")[1];
     // console.log(gottenToken[1]);
     const musicLikeData = ctx.request.body.music_id;
-    const findUser = await UserRepository.findOne({
-      token: await TokenRepository.findOne({ token: gottenToken }),
+    const findUser = await UserRepository.find({
+      relations: ["token"],
+      where: { token: await TokenRepository.findOne({ token: gottenToken }) },
     });
+
+    console.log(
+      "all user token",
+      await UserRepository.find({
+        relations: ["token"],
+      })
+    );
 
     if (findUser) {
       if (musicLikeData) {
@@ -50,14 +58,14 @@ export default class MusicLikeController {
           id: musicLikeData,
         });
         const getLikeData: any = await MusicLikeRepository.findOne({
-          user: findUser,
+          user: findUser[0],
         });
         console.log(getLikeData);
 
         const musicLikeToBeSaved: MusicLike = new MusicLike();
 
         musicLikeToBeSaved.music = getMusicData;
-        musicLikeToBeSaved.user = findUser;
+        musicLikeToBeSaved.user = findUser[0];
 
         console.log("get Music Data", getMusicData);
 
@@ -69,7 +77,13 @@ export default class MusicLikeController {
           ctx.status = 400;
           ctx.body = errors;
         } else if (
-          await MusicLikeRepository.findOne({ music: musicLikeToBeSaved.music })
+          await MusicLikeRepository.findOne({
+            relations: ["music", "user"],
+            where: {
+              music: musicLikeToBeSaved.music,
+              user: findUser[0],
+            },
+          })
         ) {
           const findMusicData = await MusicLikeRepository.findOne({
             music: getMusicData,
@@ -82,7 +96,7 @@ export default class MusicLikeController {
 
           const MusicUserList = await MusicLikeRepository.find({
             relations: ["music"],
-            where: { user: findUser },
+            where: { user: findUser[0] },
           });
 
           let sendingData: any = [];
@@ -109,7 +123,7 @@ export default class MusicLikeController {
 
           const MusicUserList = await MusicLikeRepository.find({
             relations: ["music"],
-            where: { user: findUser },
+            where: { user: findUser[0] },
             order: { createdat: "ASC" },
           });
 
@@ -162,17 +176,18 @@ export default class MusicLikeController {
 
     const gottenToken = ctx.request.header.authorization.split(" ")[1];
 
-    const findUser = await UserRepository.findOne({
-      token: await TokenRepository.findOne({ token: gottenToken }),
+    const findUser = await UserRepository.find({
+      relations: ["token"],
+      where: { token: await TokenRepository.findOne({ token: gottenToken }) },
     });
 
     if (findUser) {
+      console.log("folder find User", findUser[0]);
       const MusicUserList = await MusicLikeRepository.find({
         relations: ["music"],
-        where: { user: findUser },
+        where: { user: findUser[0] },
         order: { createdat: "ASC" },
       });
-
       ctx.status = 200;
       ctx.body = MusicUserList;
     } else {

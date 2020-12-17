@@ -5,7 +5,7 @@ import { BaseContext } from "koa";
 import { request, responsesAll, summary, tagsAll } from "koa-swagger-decorator";
 import { ChangeStream, getManager, Repository } from "typeorm";
 
-import { User } from "../entity/user";
+import { comparePassword, User } from "../entity/user";
 
 import { Token } from "../entity/token";
 import { Music } from "../entity/music";
@@ -48,26 +48,43 @@ export default class MusicController {
     // console.log(ctx.request);
 
     const findMusic = await musicRepository.find();
-    // console.log(findMusic);
+
+    const gottenToken = ctx.request.header.authorization?.split(" ")[1];
+    console.log("findMusic", findMusic);
+
+    console.log("ctx", ctx.request);
 
     if (ctx.request.header.authorization?.split(" ")[1]) {
+      // const findUser = await UserRepository.find({
+      //   relations: ["token"],
+      //   where: { token: await TokenRepository.findOne({ token: gottenToken }) },
+      // });
+
       const findUser = await UserRepository.findOne({
         token: await TokenRepository.findOne({
-          token: ctx.request.header.authorization.split(" ")[1],
+          token: gottenToken,
         }),
       });
 
+      console.log(
+        "gotten token",
+        ctx.request.header.authorization?.split(" ")[1]
+      );
+      console.log("find User", await UserRepository.find());
+
       console.log(findUser);
+
+      console.log("=-=========================");
 
       const findMusicLike = await MusicLikeRepository.find({
         relations: ["music"],
         where: { user: findUser },
       });
 
-      const findMusicFile = await FolderReposiotry.find({
-        relations: ["music"],
-        where: { user: findUser },
-      });
+      // const findMusicFile = await FolderReposiotry.find({
+      //   relations: ["music"],
+      //   where: { user: findUser },
+      // });
 
       // console.log(findMusicLike);
 

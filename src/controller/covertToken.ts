@@ -11,6 +11,7 @@ import {
   encoded,
   naverGenerateToken,
   naverGenerateProfile,
+  kakaoCheck,
 } from "../entity/token";
 import { User } from "../entity/user";
 import { token } from ".";
@@ -141,35 +142,79 @@ export default class TokenController {
     userToBeSaved.name = tokenInfo.name;
     userToBeSaved.token = tokenToBeSaved;
 
+    console.log(
+      "checking token",
+      await tokenRepository.findOne({ Id: tokenToBeSaved.Id })
+    );
+
+    const kakaoId = kakaoCheck(access_token);
+    console.log(kakaoId);
+
     if (errors.length > 0) {
       console.log("Error!: ", errors);
     } else if (await tokenRepository.findOne({ Id: tokenToBeSaved.Id })) {
       try {
         console.log("remove");
 
+        console.log(tokenInfo.email);
+
         //new Token
-        const tokenValueRenew:
-          | Token
-          | undefined = await tokenRepository.findOne({
+        // const tokenValueRenew:
+        //   | Token
+        //   | undefined = await tokenRepository.findOne({
+        //   Id: tokenToBeSaved.Id,
+        // });
+
+        const tokenToRemove: Token | undefined = await tokenRepository.findOne({
           Id: tokenToBeSaved.Id,
         });
 
-        // const userToRemove: User | undefined = await userRepository.findOne({
-        //   email: userToBeSaved.email,
+        const userToRemove: User | undefined = await userRepository.findOne({
+          email: tokenInfo.email,
+        });
+
+        // const userToBeUpdate = await userRepository.findOne({
+        //   email: tokenInfo.email,
         // });
 
-        // await tokenRepository.remove(tokenToRemove).then(async (res) => {
-        //   await tokenRepository.save(tokenToBeSaved);
-        //   console.log("tokenRepository Remove");
+        await tokenRepository
+          .update(tokenToRemove.index, { token: tokenToBeSaved.token })
+          .then(async (res: any) => {
+            console.log("tokenRepository Update");
+          });
+
+        // const userUpdate = await userRepository
+        //   .update(userToRemove.index, { token: userToBeSaved.token })
+        //   .then(async (res: any) => {
+        //     console.log("userRepository Update");
+        //   });
+
+        // await tokenRepository.remove(tokenToRemove).then(async (res: any) => {
+        //   const tokenSave = await tokenRepository.save(tokenToBeSaved);
+        //   console.log("token save value", tokenSave);
         // });
 
-        // await userRepository.remove(userToRemove).then(async (res) => {
-        //   await userRepository.save(userToBeSaved);
-        //   console.log("userRepository Remove");
+        // await userRepository.remove(userToRemove).then(async (res: any) => {
+        //   const userSave = await userRepository.save(userToBeSaved);
+        //   console.log("userSave value", userSave);
         // });
 
-        await tokenRepository.update(tokenValueRenew.index, {
-          token: tokenToBeSaved.token,
+        // await tokenRepository.update(tokenValueRenew.index, {
+        //   token: tokenToBeSaved.token,
+        // });
+
+        // await userRepository.update(userToBeUpdate.index, {
+        //   token: userToBeSaved.token,
+        // });
+
+        // await userRepository.save(userToBeSaved);
+
+        // console.log("user token Update", userUpdate);
+
+        console.log("token Update", {
+          access_token,
+          refresh_token,
+          expires_in,
         });
 
         ctx.status = 200;

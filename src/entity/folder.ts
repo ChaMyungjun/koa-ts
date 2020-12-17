@@ -13,7 +13,6 @@ import {
   ManyToMany,
 } from "typeorm";
 import { FolderMusic } from "./memo";
-import { Music } from "./music";
 import { User } from "./user";
 
 @Entity()
@@ -24,14 +23,15 @@ export class Folder extends BaseEntity {
   @Column({ nullable: true })
   title: string;
 
-  @ManyToOne((type) => User, (user) => user.folder)
+  @ManyToOne((type) => User, (user) => user.folder, {
+    nullable: true,
+    cascade: true,
+    onDelete: "CASCADE",
+  })
   @JoinColumn({ name: "user_index" })
   user?: User;
 
-  @OneToMany((type) => FolderMusic, (folderMusic) => folderMusic.folder, {
-    onDelete: "SET NULL",
-    cascade: true,
-  })
+  @OneToMany((type) => FolderMusic, (folderMusic) => folderMusic.folder)
   @JoinColumn({ name: "memo_index" })
   folderMusic?: FolderMusic;
 

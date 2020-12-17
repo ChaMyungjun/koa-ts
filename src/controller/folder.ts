@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/camelcase */
 /* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -13,6 +14,7 @@ import { send } from "process";
 import { find } from "shelljs";
 import { FolderMusic } from "../entity/memo";
 import { folder } from ".";
+import { forEach } from "lodash";
 
 @responsesAll({
   200: { descriptoin: "success" },
@@ -47,8 +49,9 @@ export default class FolderController {
 
     // console.log("folderData", folderData);
 
-    const findUser = await UserRepository.findOne({
-      token: await TokenRepository.findOne({ token: gottenToken }),
+    const findUser = await UserRepository.find({
+      relations: ["token"],
+      where: { token: await TokenRepository.findOne({ token: gottenToken }) },
     });
 
     const FoldToBeSaved: Folder = new Folder();
@@ -58,7 +61,7 @@ export default class FolderController {
     if (findUser) {
       // FoldToBeSaved.memo = memoData;
       FoldToBeSaved.title = title;
-      FoldToBeSaved.user = findUser;
+      FoldToBeSaved.user = findUser[0];
 
       console.log("product doesn't exits");
 
@@ -113,8 +116,9 @@ export default class FolderController {
     const musicId = ctx.request.body.songId;
     const folderID = ctx.request.body.folderId;
 
-    const findUser = await UserRepository.findOne({
-      token: await TokenRepository.findOne({ token: gottenToken }),
+    const findUser = await UserRepository.find({
+      relations: ["token"],
+      where: { token: await TokenRepository.findOne({ token: gottenToken }) },
     });
 
     if (findUser) {
@@ -128,7 +132,7 @@ export default class FolderController {
       const folderMusicToBeSaved = new Folder();
 
       console.log("get Music Data", getMusicData);
-      console.log("find Folder", findFolder.user);
+      // console.log("find Folder", findFolder.user);
 
       // folderMusicToBeSaved.title = findFolder.title;
       // folderMusicToBeSaved.user = findFolder.user;
@@ -139,7 +143,7 @@ export default class FolderController {
 
       memoToBeSaved.memo = ctx.request.body.memo;
       memoToBeSaved.music = getMusicData;
-      // memoToBeSaved.folder = findFolder;
+      memoToBeSaved.folder = findFolder;
 
       console.log("saved muisc data", memoToBeSaved.music);
 
@@ -152,16 +156,18 @@ export default class FolderController {
       );
 
       if (
-        // await MemoRepository.find({
-        //   music: memoToBeSaved.music,
-        //   folder: await FolderReposiotry.findOne({ user: findUser }),
-        // })
+        await MemoRepository.find({
+          relations: ["folder", "music"],
+          where: {
+            folder: await FolderReposiotry.findOne({ user: findUser[0] }),
+            music: memoToBeSaved.music,
+          },
+        })
 
         // await FolderReposiotry.findOne({
         //   user: findUser,
         //   music: findFolder.music,
         // })
-        false
       ) {
         // const UserFolderList = await FolderReposiotry.find({
         //   relations: ["music"],
@@ -182,31 +188,70 @@ export default class FolderController {
         ctx.body = { error: "음악이 현재 폴더 들어 있습니다." };
       } else {
         const memo = await MemoRepository.save(memoToBeSaved);
-        const fold = await FolderReposiotry.save(findFolder);
 
-        console.log("saving Value fold", fold);
         console.log("saving value memo", memo);
 
         const UserFolderList = await FolderReposiotry.find({
-          relations: ["memo"],
-          where: { user: findUser },
+          relations: ["user"],
+          where: {
+            user: findUser[0],
+          },
         });
+
+        const MemoList = await MemoRepository.find({
+          relations: ["music", "folder"],
+          where: {
+            folder: await FolderReposiotry.findOne({ user: findUser[0] }),
+          },
+        });
+
+        console.log("user folder List", UserFolderList);
+        console.log("user memo list", MemoList);
 
         let sendingData: any = [];
 
         // UserFolderList.map((cur, index) => {
         //   const data: any = {
         //     ...cur,
-        //     memo: cur.memo === null ? null : cur.memo,
+        //     music: cur.folderMusic.music,
         //   };
 
         //   sendingData.push(data);
         // });
+        // console.log(
+        //   "find User",
+        //   await UserRepository.findOne({
+        //     token: await TokenRepository.findOne({ token: gottenToken }),
+        //   })
+        // );
+        UserFolderList.map((cur_folder, index_folder) => {
+          let customMusicToData: any = null;
 
-        console.log(UserFolderList);
+          MemoList.map((cur, index) => {
+            if (cur.folder.id === cur_folder.id) {
+              let customMusic: any = {
+                ...cur.music,
+                memo: cur.memo,
+              };
+
+              customMusicToData = customMusic;
+            }
+          });
+          const data = {
+            ...cur_folder,
+            music: customMusicToData,
+            MusicFolder: {},
+          };
+          console.log(data);
+          sendingData.push(data);
+        });
+
+        console.log("sending Data", sendingData);
+        // console.log("user folder List", UserFolderList);
+        // console.log("user memo list", MemoList);
 
         ctx.status = 200;
-        ctx.body = UserFolderList;
+        ctx.body = sendingData;
       }
     } else {
       ctx.status = 403;
@@ -226,7 +271,9 @@ export default class FolderController {
       Folder
     );
 
-    const MemoRepository: Repository<FolderMusic> = getManager().getRepository(FolderMusic);
+    const MemoRepository: Repository<FolderMusic> = getManager().getRepository(
+      FolderMusic
+    );
 
     // const MusicRepository: Repository<Music> = getManager().getRepository(
     //   Music
@@ -234,39 +281,84 @@ export default class FolderController {
 
     const gottenToken = ctx.request.header.authorization.split(" ")[1];
 
-    const findUser = await UserRepository.findOne({
-      token: await TokenRepository.findOne({ token: gottenToken }),
+    const findUser = await UserRepository.find({
+      relations: ["token"],
+      where: { token: await TokenRepository.findOne({ token: gottenToken }) },
     });
+    console.log("folder find User", findUser);
 
     if (findUser) {
       const FolderList = await FolderReposiotry.find({
-        relations: ["memo"],
-        where: { user: findUser },
+        relations: ["user"],
+        where: {
+          user: findUser[0],
+        },
       });
 
       const MemoList = await MemoRepository.find({
-        relations: ["music"],
-        where: { user: findUser },
+        relations: ["music", "folder"],
+        where: {
+          folder: await FolderReposiotry.findOne({ user: findUser[0] }),
+        },
       });
 
       let sendingData: any = [];
 
-      FolderList.map((cur, index) => {
-        const data: any = {
-          ...cur,
-          // music: cur.memo.music,
+      // FolderList.map((cur, index) => {
+      //   const data: any = {
+      //     ...cur,
+      //     // music: cur.memo.music,
+      //   };
+
+      //   sendingData.push(data);
+      // });
+
+      console.log(FolderList);
+      console.log(MemoList);
+
+      FolderList.map((cur_folder, index_folder) => {
+        console.log("mapping");
+        let customMusicToData: any = null;
+        MemoList.map((cur, index) => {
+          console.log("mapping22");
+          if (cur.folder.id === cur_folder.id) {
+            let customMusic: any = {
+              ...cur.music,
+              memo: cur.memo,
+            };
+            customMusicToData = customMusic;
+            console.log(customMusicToData);
+          }
+        });
+
+        const data = {
+          ...cur_folder,
+          music: customMusicToData,
         };
 
         sendingData.push(data);
+        console.log(data);
       });
 
-      console.log(sendingData);
+      // FolderList.map((cur, index) => {
+      //   console.log(cur.folderMusic.music);
+      //   const data = {
+      //     ...cur,
+      //     folderMusic: {
+      //       ...cur.folderMusic.music,
+      //     },
+      //   };
+
+      //   sendingData.push(data);
+      // });
+
+      console.log("sending data", sendingData);
 
       ctx.status = 200;
-      ctx.body = MemoList;
+      ctx.body = sendingData;
     } else {
       console.log("token doesn't exists");
-      ctx.status = 403;
+      ctx.status = 200;
       ctx.body = { error: "token doesn't exists" };
     }
   }

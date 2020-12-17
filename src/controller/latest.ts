@@ -43,8 +43,9 @@ export default class LatestController {
 
     const gottenToken = ctx.request.header.authorization?.split(" ")[1];
     const musiclatestData = ctx.request.body.music_id;
-    const findUser = await UserRepository.findOne({
-      token: await TokenRepository.findOne({ token: gottenToken }),
+    const findUser = await UserRepository.find({
+      relations: ["token"],
+      where: { token: await TokenRepository.findOne({ token: gottenToken }) },
     });
 
     if (!ctx.request.header.authorization?.split(" ")[1]) {
@@ -61,7 +62,7 @@ export default class LatestController {
         id: musiclatestData,
       });
 
-      latestToBeSaved.user = findUser;
+      latestToBeSaved.user = findUser[0];
       latestToBeSaved.music = getMusicData;
 
       const errors: ValidationError[] = await validate(latestToBeSaved);
@@ -85,7 +86,7 @@ export default class LatestController {
       } else if (
         await latestRepository.findOne({
           music: latestToBeSaved.music,
-          user: findUser,
+          user: findUser[0],
         })
       ) {
         console.log("already exists items");
@@ -123,7 +124,7 @@ export default class LatestController {
 
         const findMusicList = await latestRepository.find({
           relations: ["music"],
-          where: { user: findUser },
+          where: { user: findUser[0] },
           order: { createdAt: "ASC" },
         });
 
@@ -153,7 +154,7 @@ export default class LatestController {
 
         const findMusicList = await latestRepository.find({
           relations: ["music"],
-          where: { user: findUser },
+          where: { user: findUser[0] },
           order: { createdAt: "ASC" },
         });
 
@@ -197,8 +198,9 @@ export default class LatestController {
     );
 
     const gottenToken = ctx.request.header.authorization.split(" ")[1];
-    const findUser = await UserRepository.findOne({
-      token: await TokenRepository.findOne({ token: gottenToken }),
+    const findUser = await UserRepository.find({
+      relations: ["token"],
+      where: { token: await TokenRepository.findOne({ token: gottenToken }) },
     });
 
     if (!ctx.request.header.authorization?.split(" ")[1]) {
@@ -209,7 +211,7 @@ export default class LatestController {
     if (findUser) {
       const initMusicData = await latestRepository.find({
         relations: ["music"],
-        where: { user: findUser },
+        where: { user: findUser[0] },
         order: { createdAt: "ASC" },
       });
 
@@ -233,7 +235,7 @@ export default class LatestController {
       ctx.status = 200;
       ctx.body = initMusicData;
     } else {
-      ctx.status = 403;
+      ctx.status = 200;
       ctx.body = { erorr: "token doesn't exists" };
     }
   }

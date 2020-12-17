@@ -24,11 +24,18 @@ export class FolderMusic extends BaseEntity {
   @Column({ nullable: true })
   memo: string;
 
-  @ManyToOne((type) => Music, (music) => music.folderMusic)
+  @ManyToOne((type) => Music, (music) => music.folderMusic, {
+    nullable: true,
+    onDelete: "CASCADE",
+  })
   @JoinColumn({ name: "music_index" })
   music?: Music;
 
-  @ManyToOne((type) => Folder, (folder) => folder.folderMusic)
+  @ManyToOne((type) => Folder, (folder) => folder.folderMusic, {
+    cascade: true,
+    onDelete: "CASCADE",
+    nullable: true,
+  })
   @JoinColumn({ name: "folder_index" })
   folder?: Folder;
 
