@@ -150,24 +150,18 @@ export default class FolderController {
       console.log(
         "chekcing",
         await MemoRepository.find({
-          // folder: await FolderReposiotry.findOne({ user: findUser }),
-          music: memoToBeSaved.music,
+          folder: findFolder,
         })
+        // findFolder
       );
 
-      if (
-        await MemoRepository.find({
-          relations: ["folder", "music"],
-          where: {
-            folder: await FolderReposiotry.findOne({ user: findUser[0] }),
-            music: memoToBeSaved.music,
-          },
-        })
+      console.log("find User", findUser[0]);
 
-        // await FolderReposiotry.findOne({
-        //   user: findUser,
-        //   music: findFolder.music,
-        // })
+      if (
+        await MemoRepository.findOne({
+          music: memoToBeSaved.music,
+          folder: findFolder,
+        })
       ) {
         // const UserFolderList = await FolderReposiotry.find({
         //   relations: ["music"],
@@ -237,12 +231,14 @@ export default class FolderController {
               customMusicToData = customMusic;
             }
           });
+
+          console.log("customMusic To Data", customMusicToData);
+
           const data = {
             ...cur_folder,
             music: customMusicToData,
-            MusicFolder: {},
           };
-          console.log(data);
+          console.log(customMusicToData);
           sendingData.push(data);
         });
 
