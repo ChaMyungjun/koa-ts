@@ -219,7 +219,7 @@ export default class FolderController {
         //   })
         // );
         UserFolderList.map((cur_folder, index_folder) => {
-          let customMusicToData: any = null;
+          let customMusicToData: any = [];
 
           MemoList.map((cur, index) => {
             if (cur.folder.id === cur_folder.id) {
@@ -228,17 +228,14 @@ export default class FolderController {
                 memo: cur.memo,
               };
 
-              customMusicToData = customMusic;
+              customMusicToData.push(customMusic);
             }
           });
-
-          console.log("customMusic To Data", customMusicToData);
-
           const data = {
             ...cur_folder,
             music: customMusicToData,
           };
-          console.log(customMusicToData);
+          console.log();
           sendingData.push(data);
         });
 
@@ -285,10 +282,7 @@ export default class FolderController {
 
     if (findUser) {
       const FolderList = await FolderReposiotry.find({
-        relations: ["user"],
-        where: {
-          user: findUser[0],
-        },
+        user: findUser[0],
       });
 
       const MemoList = await MemoRepository.find({
@@ -314,7 +308,7 @@ export default class FolderController {
 
       FolderList.map((cur_folder, index_folder) => {
         console.log("mapping");
-        let customMusicToData: any = null;
+        let customMusicToData: any = [];
         MemoList.map((cur, index) => {
           console.log("mapping22");
           if (cur.folder.id === cur_folder.id) {
@@ -322,7 +316,7 @@ export default class FolderController {
               ...cur.music,
               memo: cur.memo,
             };
-            customMusicToData = customMusic;
+            customMusicToData.push(customMusic);
             console.log(customMusicToData);
           }
         });
