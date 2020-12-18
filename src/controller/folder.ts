@@ -16,6 +16,7 @@ import { FolderMusic } from "../entity/memo";
 import { folder, token } from ".";
 import { forEach } from "lodash";
 import { getFaviconFromBranding } from "admin-bro";
+import { TokenError } from "passport-oauth2";
 
 @responsesAll({
   200: { descriptoin: "success" },
@@ -124,9 +125,13 @@ export default class FolderController {
     const musicId = ctx.request.body.songId;
     const folderID = ctx.request.body.folderId;
 
-    const findUser = await UserRepository.find({
-      relations: ["token"],
-      where: { token: await TokenRepository.findOne({ token: gottenToken }) },
+    // const findUser = await UserRepository.find({
+    //   relations: ["token"],
+    //   where: { token: await TokenRepository.findOne({ token: gottenToken }) },
+    // });
+
+    const findUser = await UserRepository.findOne({
+      token: await TokenRepository.findOne({ token: gottenToken }),
     });
 
     if (findUser) {
@@ -163,7 +168,7 @@ export default class FolderController {
         // findFolder
       );
 
-      console.log("find User", findUser[0]);
+      console.log("find User", findUser);
 
       if (
         await MemoRepository.findOne({
@@ -194,7 +199,7 @@ export default class FolderController {
         console.log("saving value memo", memo);
 
         const UserFolderList = await FolderReposiotry.find({
-          user: findUser[0],
+          user: findUser,
         });
 
         const MemoList = await MemoRepository.find({
@@ -245,7 +250,7 @@ export default class FolderController {
         });
 
         console.log("sending Data", sendingData);
-        console.log("findUser", findUser[0]);
+        console.log("findUser", findUser);
         // console.log("user folder List", UserFolderList);
         // console.log("user memo list", MemoList);
 
@@ -280,15 +285,19 @@ export default class FolderController {
 
     const gottenToken = ctx.request.header.authorization.split(" ")[1];
 
-    const findUser = await UserRepository.find({
-      relations: ["token"],
-      where: { token: await TokenRepository.findOne({ token: gottenToken }) },
+    // const findUser = await UserRepository.find({
+    //   relations: ["token"],
+    //   where: { token: await TokenRepository.findOne({ token: gottenToken }) },
+    // });
+
+    const findUser = await UserRepository.findOne({
+      token: await TokenRepository.findOne({ token: gottenToken }),
     });
     console.log("folder find User", findUser);
 
     if (findUser) {
       const FolderList = await FolderReposiotry.find({
-        user: findUser[0],
+        user: findUser,
       });
 
       console.log(
@@ -301,7 +310,7 @@ export default class FolderController {
         // await MemoRepository.find({
         //   folder: await FolderReposiotry.findOne({ user: findUser[0] }),
         // })
-        await FolderReposiotry.find({ user: findUser[0] })
+        await FolderReposiotry.find({ user: findUser })
       );
 
       const MemoList = await MemoRepository.find({

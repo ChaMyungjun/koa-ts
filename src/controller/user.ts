@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/camelcase */
 import { BaseContext } from "koa";
 import { getManager, Repository, Like } from "typeorm";
@@ -20,6 +21,7 @@ import {
 } from "../entity/user";
 
 import { Token } from "../entity/token";
+import { Company } from "../entity/company";
 //import { Company } from "src/entity/company";
 
 @responsesAll({
@@ -304,5 +306,50 @@ export default class UserController {
     console.log("logout");
 
     //db token delete
+  }
+
+  @request("post", "/user/profile")
+  @summary("modify user profile")
+  public static async userProfile(ctx: BaseContext): Promise<void> {
+    const userRepository: Repository<User> = getManager().getRepository(User);
+    const tokenRepository: Repository<Token> = getManager().getRepository(
+      Token
+    );
+    const companyRepositoyry: Repository<Company> = getManager().getRepository(
+      Company
+    );
+
+    const gottentToken = ctx.request.header.authorization.split(" ")[1];
+
+    const findUser = await userRepository.findOne({
+      token: await tokenRepository.findOne({ token: gottentToken }),
+    });
+
+    if (findUser) {
+      const findCompany = await companyRepositoyry.findOne({ user: findUser });
+      if (findCompany) {
+        const sendingData = {
+          id: findUser.index,
+          email: findUser.email,
+          isSocial: findUser.token.tokenProvider,
+          ...findCompany,
+        };
+
+        ctx.status = 200;
+        ctx.body = sendingData;
+      } else {
+        const sendingData = {
+          id: findUser.index,
+          email: findUser.email,
+          isSocial: findUser.token.tokenProvider,
+        };
+
+        ctx.status = 200;
+        ctx.body = sendingData;
+      }
+    } else {
+      ctx.status = 403;
+      ctx.body = { error: "token doesn't exists" };
+    }
   }
 }

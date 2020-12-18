@@ -72,6 +72,9 @@ export default class MusicController {
         }),
       });
 
+      const startPos = 0;
+      const endPos = 10;
+
       console.log(
         "gotten token",
         ctx.request.header.authorization?.split(" ")[1]
@@ -83,6 +86,8 @@ export default class MusicController {
       console.log("=-=========================");
 
       const findMusicLike = await MusicLikeRepository.find({
+        skip: 0, 
+        take: 10,
         relations: ["music"],
         where: { user: findUser },
       });
