@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/camelcase */
 /* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -13,12 +14,13 @@ import { latest, musicLike } from ".";
 import { MusicLike } from "../entity/musicLike";
 import { count } from "console";
 import { Folder } from "../entity/folder";
+import { FolderMusic } from "../entity/memo";
 
 @responsesAll({
   200: { description: "success" },
   400: { description: "bad request" },
   401: { description: "unauthorized, missing/wrong jwt token" },
-  403: { description: "" },
+  403: { description: ""},
 })
 @tagsAll(["Music"])
 export default class MusicController {
@@ -43,6 +45,10 @@ export default class MusicController {
 
     const FolderReposiotry: Repository<Folder> = await getManager().getRepository(
       Folder
+    );
+
+    const MusicFolderRepository: Repository<FolderMusic> = await getManager().getRepository(
+      FolderMusic
     );
 
     // console.log(ctx.request);
@@ -81,10 +87,31 @@ export default class MusicController {
         where: { user: findUser },
       });
 
-      // const findMusicFile = await FolderReposiotry.find({
-      //   relations: ["music"],
-      //   where: { user: findUser },
-      // });
+      const findFolder = await FolderReposiotry.find({
+        user: findUser,
+      });
+
+      const findMusicFile = await MusicFolderRepository.find({
+        relations: ["music", "folder"],
+      });
+
+      let customFileData: any = [];
+
+      findFolder.map((cur_folder, index_folder) => {
+        let customMusicToData: any = [];
+
+        findMusicFile.map((cur, index) => {
+          if (cur.folder?.id === cur_folder.id) {
+            let customMusic: any = {
+              ...cur.music,
+              memo: cur.memo,
+            };
+
+            customMusicToData.push(customMusic);
+          }
+        });
+        customFileData.push(customMusicToData);
+      });
 
       // console.log(findMusicLike);
 
@@ -99,9 +126,10 @@ export default class MusicController {
               (ml) => ml.music.id === findMusic[index].id
             ) !== -1,
 
-          //isFile: findMusicFile.findIndex((ml) => ml.music !== null) !== -1,
-          // isFile:
-          // isFile: cur.music === null ? null : true,
+          isFile:
+            findMusicFile.findIndex(
+              (ml) => ml.music?.id === findMusic[index].id
+            ) !== -1,
         };
         // console.log(findMusicLike[index]?.music.id);
         // console.log(cur.id);
